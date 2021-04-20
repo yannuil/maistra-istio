@@ -43,6 +43,7 @@ pilot:
   volumes: []
 
   nodeSelector: {}
+  podLabels: {}
   podAnnotations: {}
   serviceAnnotations: {}
 

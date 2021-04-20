@@ -33,6 +33,7 @@ pilot:
   # Additional volumes to the istiod pod
   volumes: []
   nodeSelector: {}
+  podLabels: {}
   podAnnotations: {}
   serviceAnnotations: {}
   topologySpreadConstraints: []
