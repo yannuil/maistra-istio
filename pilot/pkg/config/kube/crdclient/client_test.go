@@ -47,7 +47,9 @@ func makeClient(t *testing.T, schemas collection.Schemas, f ...func(o Option) Op
 		clienttest.MakeCRD(t, fake, s.GroupVersionResource())
 	}
 	stop := test.NewStop(t)
-	var o Option
+	o := Option{
+		EnableCRDScan: true,
+	}
 	for _, fn := range f {
 		o = fn(o)
 	}

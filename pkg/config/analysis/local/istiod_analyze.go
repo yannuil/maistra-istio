@@ -357,6 +357,7 @@ func (sa *IstiodAnalyzer) AddRunningKubeSourceWithRevision(c kubelib.Client, rev
 				ObjectFilter: isIstioConfigMap,
 			},
 		},
+		EnableCRDScan: true,
 	}, sa.kubeResources.Remove(kuberesource.DefaultExcludedSchemas().All()...))
 	sa.stores = append(sa.stores, store)
 
@@ -381,6 +382,7 @@ func (sa *IstiodAnalyzer) AddRunningKubeSourceWithRevision(c kubelib.Client, rev
 				FieldSelector: generalSelectors,
 			},
 		},
+		EnableCRDScan: true,
 	}, sa.kubeResources.Intersect(kuberesource.DefaultExcludedSchemas()))
 	sa.stores = append(sa.stores, store)
 

@@ -47,7 +47,7 @@ type Controller struct {
 }
 
 func NewController(stop <-chan struct{}, rwConfigStore model.ConfigStoreController,
-	kubeClient kube.Client, revision, namespace string, statusManager *status.Manager, domainSuffix string,
+	kubeClient kube.Client, revision, namespace string, statusManager *status.Manager, domainSuffix string, enableCRDScan bool,
 ) (*Controller, error) {
 	analyzer := analyzers.AllCombined()
 	all := kuberesource.ConvertInputsToSchemas(analyzer.Metadata().Inputs)
@@ -58,10 +58,11 @@ func NewController(stop <-chan struct{}, rwConfigStore model.ConfigStoreControll
 	// Filter out configs watched by rwConfigStore so we don't watch multiple times
 	store := crdclient.NewForSchemas(kubeClient,
 		crdclient.Option{
-			Revision:     revision,
-			DomainSuffix: domainSuffix,
-			Identifier:   "analysis-controller",
-			FiltersByGVK: ia.GetFiltersByGVK(),
+			Revision:      revision,
+			DomainSuffix:  domainSuffix,
+			Identifier:    "analysis-controller",
+			FiltersByGVK:  ia.GetFiltersByGVK(),
+			EnableCRDScan: enableCRDScan,
 		},
 		all.Remove(rwConfigStore.Schemas().All()...))
 

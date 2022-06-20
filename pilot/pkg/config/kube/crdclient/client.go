@@ -91,6 +91,7 @@ type Option struct {
 	Revision         string
 	DomainSuffix     string
 	Identifier       string
+	EnableCRDScan    bool
 	NamespacesFilter func(obj interface{}) bool
 	FiltersByGVK     map[config.GroupVersionKind]kubetypes.Filter
 }
