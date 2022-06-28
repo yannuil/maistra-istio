@@ -1386,6 +1386,64 @@ func Test_autoAllocateIP_conditions(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "allocate the same IP for dns lb with the same hostname",
+			inServices: []*model.Service{
+				{
+					Hostname:       "foo.com",
+					Resolution:     model.DNSLB,
+					DefaultAddress: "0.0.0.0",
+				},
+				{
+					Hostname:       "foo.com",
+					Resolution:     model.DNSLB,
+					DefaultAddress: "0.0.0.0",
+				},
+			},
+			wantServices: []*model.Service{
+				{
+					Hostname:             "foo.com",
+					Resolution:           model.DNSLB,
+					DefaultAddress:       "0.0.0.0",
+					AutoAllocatedAddress: "240.240.0.1",
+				},
+				{
+					Hostname:             "foo.com",
+					Resolution:           model.DNSLB,
+					DefaultAddress:       "0.0.0.0",
+					AutoAllocatedAddress: "240.240.0.1",
+				},
+			},
+		},
+		{
+			name: "allocate different IPs for dns lb with different hostnames",
+			inServices: []*model.Service{
+				{
+					Hostname:       "foo.com",
+					Resolution:     model.DNSLB,
+					DefaultAddress: "0.0.0.0",
+				},
+				{
+					Hostname:       "bar.com",
+					Resolution:     model.DNSLB,
+					DefaultAddress: "0.0.0.0",
+				},
+			},
+			wantServices: []*model.Service{
+				{
+					Hostname:             "foo.com",
+					Resolution:           model.DNSLB,
+					DefaultAddress:       "0.0.0.0",
+					AutoAllocatedAddress: "240.240.0.1",
+				},
+				{
+					Hostname:             "bar.com",
+					Resolution:           model.DNSLB,
+					DefaultAddress:       "0.0.0.0",
+					AutoAllocatedAddress: "240.240.0.2",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1400,7 +1458,7 @@ func Test_autoAllocateIP_values(t *testing.T) {
 	inServices := make([]*model.Service, 512)
 	for i := 0; i < 512; i++ {
 		temp := model.Service{
-			Hostname:       "foo.com",
+			Hostname:       host.Name(fmt.Sprintf("foo%d.com", i)),
 			Resolution:     model.ClientSideLB,
 			DefaultAddress: constants.UnspecifiedIP,
 		}
@@ -1429,15 +1487,15 @@ func Test_autoAllocateIP_values(t *testing.T) {
 		t.Errorf("expected last IP address to be %s, got %s", expectedLastIP, gotServices[len(gotServices)-1].AutoAllocatedAddress)
 	}
 
-	gotIPMap := make(map[string]bool)
+	gotIPMap := make(map[string]string)
 	for _, svc := range gotServices {
 		if svc.AutoAllocatedAddress == "" || doNotWant[svc.AutoAllocatedAddress] {
 			t.Errorf("unexpected value for auto allocated IP address %s", svc.AutoAllocatedAddress)
 		}
-		if gotIPMap[svc.AutoAllocatedAddress] {
+		if v, ok := gotIPMap[svc.AutoAllocatedAddress]; ok && v != svc.Hostname.String() {
 			t.Errorf("multiple allocations of same IP address to different services: %s", svc.AutoAllocatedAddress)
 		}
-		gotIPMap[svc.AutoAllocatedAddress] = true
+		gotIPMap[svc.AutoAllocatedAddress] = svc.Hostname.String()
 	}
 }
 
