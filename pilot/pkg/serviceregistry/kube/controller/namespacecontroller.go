@@ -32,19 +32,12 @@ import (
 	"istio.io/istio/security/pkg/k8s"
 )
 
-const (
+var (
 	// CACertNamespaceConfigMap is the name of the ConfigMap in each namespace storing the root cert of non-Kube CA.
-	CACertNamespaceConfigMap = "istio-ca-root-cert"
+	CACertNamespaceConfigMap = features.CACertConfigMapName
 
-	// maxRetries is the number of times a namespace will be retried before it is dropped out of the queue.
-	// With the current rate-limiter in use (5ms*2^(maxRetries-1)) the following numbers represent the
-	// sequence of delays between successive queuing of a namespace.
-	//
-	// 5ms, 10ms, 20ms, 40ms, 80ms
-	maxRetries = 5
+	configMapLabel = map[string]string{"istio.io/config": "true"}
 )
-
-var configMapLabel = map[string]string{"istio.io/config": "true"}
 
 // NamespaceController manages reconciles a configmap in each namespace with a desired set of data.
 type NamespaceController struct {
