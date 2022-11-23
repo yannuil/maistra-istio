@@ -504,3 +504,8 @@ bookinfo.push:
 	@BOOKINFO_TAG=${BOOKINFO_VERSION} BOOKINFO_HUB=${HUB} samples/bookinfo/src/build-services.sh --push
 
 include common/Makefile.common.mk
+
+#-----------------------------------------------------------------------------
+# Maistra
+#-----------------------------------------------------------------------------
+include maistra/maistra.mk
