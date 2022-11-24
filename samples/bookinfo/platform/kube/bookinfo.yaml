@@ -65,6 +65,8 @@ spec:
       version: v1
   template:
     metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
       labels:
         app: details
         version: v1
@@ -72,7 +74,7 @@ spec:
       serviceAccountName: bookinfo-details
       containers:
       - name: details
-        image: docker.io/istio/examples-bookinfo-details-v1:1.18.0
+        image: quay.io/maistra/examples-bookinfo-details-v1:2.4.0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
@@ -116,6 +118,8 @@ spec:
       version: v1
   template:
     metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
       labels:
         app: ratings
         version: v1
@@ -123,7 +127,7 @@ spec:
       serviceAccountName: bookinfo-ratings
       containers:
       - name: ratings
-        image: docker.io/istio/examples-bookinfo-ratings-v1:1.18.0
+        image: quay.io/maistra/examples-bookinfo-ratings-v1:2.4.0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
@@ -167,6 +171,8 @@ spec:
       version: v1
   template:
     metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
       labels:
         app: reviews
         version: v1
@@ -174,7 +180,7 @@ spec:
       serviceAccountName: bookinfo-reviews
       containers:
       - name: reviews
-        image: docker.io/istio/examples-bookinfo-reviews-v1:1.18.0
+        image: quay.io/maistra/examples-bookinfo-reviews-v1:2.4.0
         imagePullPolicy: IfNotPresent
         env:
         - name: LOG_DIR
@@ -207,6 +213,8 @@ spec:
       version: v2
   template:
     metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
       labels:
         app: reviews
         version: v2
@@ -214,7 +222,7 @@ spec:
       serviceAccountName: bookinfo-reviews
       containers:
       - name: reviews
-        image: docker.io/istio/examples-bookinfo-reviews-v2:1.18.0
+        image: quay.io/maistra/examples-bookinfo-reviews-v2:2.4.0
         imagePullPolicy: IfNotPresent
         env:
         - name: LOG_DIR
@@ -247,6 +255,8 @@ spec:
       version: v3
   template:
     metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
       labels:
         app: reviews
         version: v3
@@ -254,7 +264,7 @@ spec:
       serviceAccountName: bookinfo-reviews
       containers:
       - name: reviews
-        image: docker.io/istio/examples-bookinfo-reviews-v3:1.18.0
+        image: quay.io/maistra/examples-bookinfo-reviews-v3:2.4.0
         imagePullPolicy: IfNotPresent
         env:
         - name: LOG_DIR
@@ -315,6 +325,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9080"
         prometheus.io/path: "/metrics"
+        sidecar.istio.io/inject: "true"
       labels:
         app: productpage
         version: v1
@@ -322,7 +333,7 @@ spec:
       serviceAccountName: bookinfo-productpage
       containers:
       - name: productpage
-        image: docker.io/istio/examples-bookinfo-productpage-v1:1.18.0
+        image: quay.io/maistra/examples-bookinfo-productpage-v1:2.4.0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
