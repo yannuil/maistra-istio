@@ -97,6 +97,7 @@ type DeploymentController struct {
 	namespaces      kclient.Client[*corev1.Namespace]
 	tagWatcher      revisions.TagWatcher
 	revision        string
+	defaultLabels   map[string]string
 }
 
 // Patcher is a function that abstracts patching logic. This is largely because client-go fakes do not handle patching
@@ -219,6 +220,14 @@ func NewDeploymentController(client kube.Client, clusterID cluster.ID, env *mode
 		}
 	})
 
+	defaultLabels := make(map[string]string, 0)
+	err := json.Unmarshal([]byte(features.DefaultLabelsForInjectedGateways), &defaultLabels)
+	if err != nil {
+		log.Warnf("failed to parse default labels for Deployments: %v", err)
+	} else {
+		dc.defaultLabels = defaultLabels
+	}
+
 	return dc
 }
 
@@ -314,6 +323,8 @@ func (d *DeploymentController) configureIstioGateway(log *istiolog.Scope, gw gat
 		Revision:       d.revision,
 	}
 
+	d.setDefaultLabels(input.Gateway)
+
 	if overwriteControllerVersion {
 		log.Debugf("write controller version, existing=%v", existingControllerVersion)
 		if err := d.setGatewayControllerVersion(gw); err != nil {
@@ -335,6 +346,18 @@ func (d *DeploymentController) configureIstioGateway(log *istiolog.Scope, gw gat
 
 	log.Info("gateway updated")
 	return nil
+}
+
+func (d *DeploymentController) setDefaultLabels(gateway *gateway.Gateway) {
+	for key, value := range d.defaultLabels {
+		if gateway.Labels == nil {
+			gateway.Labels = make(map[string]string, len(d.defaultLabels))
+		}
+		// don't override user values
+		if _, ok := gateway.Labels[key]; !ok {
+			gateway.Labels[key] = value
+		}
+	}
 }
 
 const (
