@@ -15,7 +15,9 @@
 package v1beta1
 
 import (
+	"os"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -39,9 +41,11 @@ import (
 	"istio.io/istio/pilot/pkg/model"
 	"istio.io/istio/pilot/pkg/model/test"
 	"istio.io/istio/pilot/pkg/security/authn"
+	"istio.io/istio/pilot/pkg/security/authn/utils"
 	"istio.io/istio/pilot/pkg/util/protoconv"
 	"istio.io/istio/pkg/config"
 	"istio.io/istio/pkg/config/host"
+	tls_features "istio.io/istio/pkg/features"
 	"istio.io/istio/pkg/jwt"
 	protovalue "istio.io/istio/pkg/proto"
 	istiotest "istio.io/istio/pkg/test"
@@ -1501,9 +1505,81 @@ func TestAuthnFilterConfig(t *testing.T) {
 }
 
 func TestInboundMTLSSettings(t *testing.T) {
+	runTestInboundMTLSSettings(t, &tls.TlsParameters{
+		CipherSuites: utils.SupportedCiphers,
+	})
+}
+
+func TestTLSProtocolVersionInboundMTLSSettings(t *testing.T) {
+	_ = os.Setenv("TLS_MIN_PROTOCOL_VERSION", "TLSv1_2")
+	_ = os.Setenv("TLS_MAX_PROTOCOL_VERSION", "TLSv1_3")
+
+	defer func() {
+		_ = os.Unsetenv("TLS_MIN_PROTOCOL_VERSION")
+		_ = os.Unsetenv("TLS_MAX_PROTOCOL_VERSION")
+	}()
+	runTestInboundMTLSSettings(t, &tls.TlsParameters{
+		TlsMinimumProtocolVersion: tls.TlsParameters_TLSv1_2,
+		TlsMaximumProtocolVersion: tls.TlsParameters_TLSv1_3,
+		CipherSuites:              utils.SupportedCiphers,
+	})
+}
+
+func TestTLSCipherSuitesInboundMTLSSettings(t *testing.T) {
+	_ = os.Setenv("TLS_CIPHER_SUITES", strings.Join(tls_features.SupportedGolangCiphers, ", "))
+	tls_features.TLSCipherSuites.Reset()
+
+	defer func() {
+		_ = os.Unsetenv("TLS_CIPHER_SUITES")
+		tls_features.TLSCipherSuites.Reset()
+	}()
+	runTestInboundMTLSSettings(t, &tls.TlsParameters{
+		CipherSuites: tls_features.SupportedOpenSSLCiphers,
+	})
+}
+
+func TestTLSCipherSuitesProtocolVersionInboundMTLSSettings(t *testing.T) {
+	_ = os.Setenv("TLS_CIPHER_SUITES", strings.Join(tls_features.SupportedGolangCiphers, ", "))
+	tls_features.TLSCipherSuites.Reset()
+	_ = os.Setenv("TLS_MIN_PROTOCOL_VERSION", "TLSv1_2")
+	_ = os.Setenv("TLS_MAX_PROTOCOL_VERSION", "TLSv1_3")
+
+	defer func() {
+		_ = os.Unsetenv("TLS_CIPHER_SUITES")
+		tls_features.TLSCipherSuites.Reset()
+		_ = os.Unsetenv("TLS_MIN_PROTOCOL_VERSION")
+		_ = os.Unsetenv("TLS_MAX_PROTOCOL_VERSION")
+	}()
+	runTestInboundMTLSSettings(t, &tls.TlsParameters{
+		TlsMinimumProtocolVersion: tls.TlsParameters_TLSv1_2,
+		TlsMaximumProtocolVersion: tls.TlsParameters_TLSv1_3,
+		CipherSuites:              tls_features.SupportedOpenSSLCiphers,
+	})
+}
+
+func TestTLSCipherSuitesEcdhCurvesInboundMTLSSettings(t *testing.T) {
+	_ = os.Setenv("TLS_CIPHER_SUITES", strings.Join(tls_features.SupportedGolangCiphers, ", "))
+	_ = os.Setenv("TLS_ECDH_CURVES", strings.Join(tls_features.SupportedGolangECDHCurves, ", "))
+	tls_features.TLSCipherSuites.Reset()
+	tls_features.TLSECDHCurves.Reset()
+
+	defer func() {
+		_ = os.Unsetenv("TLS_CIPHER_SUITES")
+		_ = os.Unsetenv("TLS_ECDH_CURVES")
+		tls_features.TLSCipherSuites.Reset()
+		tls_features.TLSECDHCurves.Reset()
+	}()
+	runTestInboundMTLSSettings(t, &tls.TlsParameters{
+		CipherSuites: tls_features.SupportedOpenSSLCiphers,
+		EcdhCurves:   tls_features.SupportedOpenSSLECDHCurves,
+	})
+}
+
+func runTestInboundMTLSSettings(t *testing.T, tlsParam *tls.TlsParameters) {
 	now := time.Now()
 	tlsContext := &tls.DownstreamTlsContext{
 		CommonTlsContext: &tls.CommonTlsContext{
+			TlsParams: tlsParam,
 			TlsCertificateSdsSecretConfigs: []*tls.SdsSecretConfig{
 				{
 					Name: "default",
@@ -1554,18 +1630,6 @@ func TestInboundMTLSSettings(t *testing.T) {
 				},
 			},
 			AlpnProtocols: []string{"istio-peer-exchange", "h2", "http/1.1"},
-			TlsParams: &tls.TlsParameters{
-				TlsMinimumProtocolVersion: tls.TlsParameters_TLSv1_2,
-				TlsMaximumProtocolVersion: tls.TlsParameters_TLSv1_3,
-				CipherSuites: []string{
-					"ECDHE-ECDSA-AES256-GCM-SHA384",
-					"ECDHE-RSA-AES256-GCM-SHA384",
-					"ECDHE-ECDSA-AES128-GCM-SHA256",
-					"ECDHE-RSA-AES128-GCM-SHA256",
-					"AES256-GCM-SHA384",
-					"AES128-GCM-SHA256",
-				},
-			},
 		},
 		RequireClientCertificate: protovalue.BoolTrue,
 	}

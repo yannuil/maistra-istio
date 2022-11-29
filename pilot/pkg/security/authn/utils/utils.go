@@ -23,6 +23,7 @@ import (
 	"istio.io/istio/pilot/pkg/networking"
 	"istio.io/istio/pilot/pkg/networking/util"
 	authn_model "istio.io/istio/pilot/pkg/security/model"
+	tls_features "istio.io/istio/pkg/features"
 	protovalue "istio.io/istio/pkg/proto"
 )
 
@@ -69,15 +70,22 @@ func BuildInboundTLS(mTLSMode model.MutualTLSMode, node *model.Proxy,
 		// protocol, e.g. HTTP/2.
 		ctx.CommonTlsContext.AlpnProtocols = util.ALPNHttp
 	}
-	ciphers := SupportedCiphers
+	var ciphers []string
 	if mc != nil && mc.MeshMTLS != nil && mc.MeshMTLS.CipherSuites != nil {
 		ciphers = mc.MeshMTLS.CipherSuites
 	}
+	if ciphers == nil {
+		ciphers = tls_features.TLSCipherSuites.Get()
+		if len(ciphers) == 0 {
+			ciphers = SupportedCiphers
+		}
+	}
 	// Set Minimum TLS version to match the default client version and allowed strong cipher suites for sidecars.
 	ctx.CommonTlsContext.TlsParams = &tls.TlsParameters{
+		TlsMinimumProtocolVersion: tls_features.TLSMinProtocolVersion.Get(),
+		TlsMaximumProtocolVersion: tls_features.TLSMaxProtocolVersion.Get(),
 		CipherSuites:              ciphers,
-		TlsMinimumProtocolVersion: minTLSVersion,
-		TlsMaximumProtocolVersion: tls.TlsParameters_TLSv1_3,
+		EcdhCurves:                tls_features.TLSECDHCurves.Get(),
 	}
 	authn_model.ApplyToCommonTLSContext(ctx.CommonTlsContext, node, []string{}, /*subjectAltNames*/
 		trustDomainAliases, ctx.RequireClientCertificate.Value)

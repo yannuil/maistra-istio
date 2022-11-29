@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	sec_model "istio.io/istio/pilot/pkg/security/model"
+	tls_features "istio.io/istio/pkg/features"
 	istiolog "istio.io/istio/pkg/log"
 )
 
@@ -63,9 +64,17 @@ func (s *Server) initSecureWebhookServer(args *PilotArgs) {
 	// create the https server for hosting the k8s injectionWebhook handlers.
 	s.httpsMux = http.NewServeMux()
 	s.httpsServer = &http.Server{
-		Addr:      args.ServerOptions.HTTPSAddr,
-		ErrorLog:  log.New(&httpServerErrorLogWriter{}, "", 0),
-		Handler:   s.httpsMux,
-		TLSConfig: tlsConfig,
+		Addr:     args.ServerOptions.HTTPSAddr,
+		ErrorLog: log.New(&httpServerErrorLogWriter{}, "", 0),
+		Handler:  s.httpsMux,
+		// Disabled, because returns false-positive error
+		//nolint:gosec
+		TLSConfig: &tls.Config{
+			GetCertificate:   s.getIstiodCertificate,
+			MinVersion:       tls_features.TLSMinProtocolVersion.GetGoTLSProtocolVersion(),
+			MaxVersion:       tls_features.TLSMaxProtocolVersion.GetGoTLSProtocolVersion(),
+			CipherSuites:     tls_features.TLSCipherSuites.GetGoTLSCipherSuites(),
+			CurvePreferences: tls_features.TLSECDHCurves.GetGoTLSECDHCurves(),
+		},
 	}
 }
