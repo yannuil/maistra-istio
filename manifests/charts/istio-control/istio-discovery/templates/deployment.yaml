@@ -197,6 +197,8 @@ spec:
             value: {{ .Values.global.tls.ecdhCurves }}
 {{- end }}
 {{- end }}
+          - name: PLATFORM
+            value: "{{ .Values.global.platform }}"
           resources:
 {{- if .Values.pilot.resources }}
 {{ toYaml .Values.pilot.resources | trim | indent 12 }}

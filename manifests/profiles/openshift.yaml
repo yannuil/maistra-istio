@@ -16,6 +16,8 @@ spec:
        - kube-system
       logLevel: info
       privileged: true
+    global:
+      platform: openshift
     sidecarInjectorWebhook:
       injectedAnnotations:
         k8s.v1.cni.cncf.io/networks: istio-cni
