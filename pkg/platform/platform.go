@@ -14,7 +14,7 @@
 
 package platform
 
-import "istio.io/istio/pkg/env"
+import "istio.io/pkg/env"
 
 const (
 	Default   = ""

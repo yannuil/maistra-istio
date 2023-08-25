@@ -510,7 +510,6 @@ func newClientInternal(clientFactory *clientFactory, revision string) (*client, 
 		}
 	}
 	c.version = lazy.NewWithRetry(clientWithTimeout.Discovery().ServerVersion)
-
 	return &c, nil
 }
 
