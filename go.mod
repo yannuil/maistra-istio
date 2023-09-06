@@ -66,6 +66,7 @@ require (
 	github.com/moby/buildkit v0.12.5
 	github.com/onsi/gomega v1.27.10
 	github.com/openshift/api v0.0.0-20231212152002-ef62af078a93
+	github.com/openshift/client-go v0.0.0-20231212205830-0ab0864ec8c2
 	github.com/pires/go-proxyproto v0.7.0
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2

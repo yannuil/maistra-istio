@@ -38,6 +38,7 @@ var (
 	ProxyConfig                    = config.GroupVersionKind{Group: "networking.istio.io", Version: "v1beta1", Kind: "ProxyConfig"}
 	ReferenceGrant                 = config.GroupVersionKind{Group: "gateway.networking.k8s.io", Version: "v1beta1", Kind: "ReferenceGrant"}
 	RequestAuthentication          = config.GroupVersionKind{Group: "security.istio.io", Version: "v1beta1", Kind: "RequestAuthentication"}
+	Route                          = config.GroupVersionKind{Group: "route.openshift.io", Version: "v1", Kind: "Route"}
 	Secret                         = config.GroupVersionKind{Group: "", Version: "v1", Kind: "Secret"}
 	Service                        = config.GroupVersionKind{Group: "", Version: "v1", Kind: "Service"}
 	ServiceAccount                 = config.GroupVersionKind{Group: "", Version: "v1", Kind: "ServiceAccount"}
@@ -114,6 +115,8 @@ func ToGVR(g config.GroupVersionKind) (schema.GroupVersionResource, bool) {
 		return gvr.ReferenceGrant, true
 	case RequestAuthentication:
 		return gvr.RequestAuthentication, true
+	case Route:
+		return gvr.Route, true
 	case Secret:
 		return gvr.Secret, true
 	case Service:
@@ -218,6 +221,8 @@ func FromGVR(g schema.GroupVersionResource) (config.GroupVersionKind, bool) {
 		return ReferenceGrant, true
 	case gvr.RequestAuthentication:
 		return RequestAuthentication, true
+	case gvr.Route:
+		return Route, true
 	case gvr.Secret:
 		return Secret, true
 	case gvr.Service:

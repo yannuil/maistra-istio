@@ -28,6 +28,8 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
+	routeclient "github.com/openshift/client-go/route/clientset/versioned"
+	routefake "github.com/openshift/client-go/route/clientset/versioned/fake"
 	"go.uber.org/atomic"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/credentials"
@@ -117,6 +119,8 @@ type Client interface {
 
 	// Istio returns the Istio kube client.
 	Istio() istioclient.Interface
+
+	Route() routeclient.Interface
 
 	// GatewayAPI returns the gateway-api kube client.
 	GatewayAPI() gatewayapiclient.Interface
@@ -251,6 +255,7 @@ func NewFakeClient(objects ...runtime.Object) CLIClient {
 	c.metadata = metadatafake.NewSimpleMetadataClient(s)
 	c.dynamic = dynamicfake.NewSimpleDynamicClient(s)
 	c.istio = istiofake.NewSimpleClientset()
+	c.route = routefake.NewSimpleClientset()
 	c.gatewayapi = gatewayapifake.NewSimpleClientset()
 	c.extSet = extfake.NewSimpleClientset()
 
@@ -295,6 +300,7 @@ func NewFakeClient(objects ...runtime.Object) CLIClient {
 	for _, fc := range []fakeClient{
 		c.kube.(*fake.Clientset),
 		c.istio.(*istiofake.Clientset),
+		c.route.(*routefake.Clientset),
 		c.gatewayapi.(*gatewayapifake.Clientset),
 		c.dynamic.(*dynamicfake.FakeDynamicClient),
 		c.metadata.(*metadatafake.FakeMetadataClient),
@@ -340,6 +346,7 @@ type client struct {
 	dynamic    dynamic.Interface
 	metadata   metadata.Interface
 	istio      istioclient.Interface
+	route      routeclient.Interface
 	gatewayapi gatewayapiclient.Interface
 
 	started atomic.Bool
@@ -411,6 +418,11 @@ func newClientInternal(clientFactory *clientFactory, revision string, cluster cl
 	}
 
 	c.istio, err = istioclient.NewForConfig(c.config)
+	if err != nil {
+		return nil, err
+	}
+
+	c.route, err = routeclient.NewForConfig(c.config)
 	if err != nil {
 		return nil, err
 	}
@@ -504,6 +516,10 @@ func (c *client) Metadata() metadata.Interface {
 
 func (c *client) Istio() istioclient.Interface {
 	return c.istio
+}
+
+func (c *client) Route() routeclient.Interface {
+	return c.route
 }
 
 func (c *client) GatewayAPI() gatewayapiclient.Interface {

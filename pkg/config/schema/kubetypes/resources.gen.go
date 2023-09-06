@@ -5,6 +5,7 @@ package kubetypes
 import (
 	"fmt"
 
+	githubcomopenshiftapiroutev1 "github.com/openshift/api/route/v1"
 	k8sioapiadmissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	k8sioapiappsv1 "k8s.io/api/apps/v1"
 	k8sioapicertificatesv1 "k8s.io/api/certificates/v1"
@@ -105,6 +106,8 @@ func GetGVK[T runtime.Object]() config.GroupVersionKind {
 		return gvk.RequestAuthentication
 	case *apiistioioapisecurityv1beta1.RequestAuthentication:
 		return gvk.RequestAuthentication
+	case *githubcomopenshiftapiroutev1.Route:
+		return gvk.Route
 	case *k8sioapicorev1.Secret:
 		return gvk.Secret
 	case *k8sioapicorev1.Service:

@@ -713,6 +713,9 @@ var (
 			"(such as with overlapping wildcard hosts)").Get()
 
 	EnableFederation = env.RegisterBoolVar("PILOT_ENABLE_FEDERATION", false, "").Get()
+
+	EnableIOR = env.RegisterBoolVar("ENABLE_IOR", false,
+		"Whether to enable IOR component, which provides integration between Istio Gateways and OpenShift Routes").Get()
 )
 
 // UnsafeFeaturesEnabled returns true if any unsafe features are enabled.

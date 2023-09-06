@@ -164,6 +164,8 @@ func toTypePath(r *ast.Resource) string {
 func toGetter(protoPackage string) string {
 	if strings.Contains(protoPackage, "istio.io") {
 		return "Istio"
+	} else if strings.Contains(protoPackage, "github.com/openshift/api/route") {
+		return "Route"
 	} else if strings.Contains(protoPackage, "sigs.k8s.io/gateway-api") {
 		return "GatewayAPI"
 	} else if strings.Contains(protoPackage, "k8s.io/apiextensions-apiserver") {

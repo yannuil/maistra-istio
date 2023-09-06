@@ -417,3 +417,12 @@ resources:
     protoPackage: "istio.io/api/extensions/v1alpha1"
     statusProto: "istio.meta.v1alpha1.IstioStatus"
     statusProtoPackage: "istio.io/api/meta/v1alpha1"
+
+  - kind: "Route"
+    plural: "Routes"
+    group: "route.openshift.io"
+    version: "v1"
+    proto: "github.com.openshift.api.route.v1.RouteSpec"
+    protoPackage: "github.com/openshift/api/route/v1"
+    statusProto: "github.com.openshift.api.route.v1.RouteStatus"
+    statusProtoPackage: "github.com/openshift/api/route/v1"

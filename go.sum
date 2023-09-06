@@ -673,6 +673,8 @@ github.com/opencontainers/image-spec v1.1.0-rc3 h1:fzg1mXZFj8YdPeNkRXMg+zb88BFV0
 github.com/opencontainers/image-spec v1.1.0-rc3/go.mod h1:X4pATf0uXsnn3g5aiGIsVnJBR4mxhKzfwmvK/B2NTm8=
 github.com/openshift/api v0.0.0-20231212152002-ef62af078a93 h1:hNj5+Wz2nZLNW1Sryj4r6R4tLAIZ+PJQd1k24kvga7g=
 github.com/openshift/api v0.0.0-20231212152002-ef62af078a93/go.mod h1:qNtV0315F+f8ld52TLtPvrfivZpdimOzTi3kn9IVbtU=
+github.com/openshift/client-go v0.0.0-20231212205830-0ab0864ec8c2 h1:ArsCqZ2t7Jepm44YxW/4t2q1bPcqiyn5erNwpfbk8dE=
+github.com/openshift/client-go v0.0.0-20231212205830-0ab0864ec8c2/go.mod h1:rk91ouw63QUVu2NfUt09MSJT4W54q5J5EV94f87jNC8=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
 github.com/pborman/uuid v1.2.0/go.mod h1:X/NO0urCmaxf9VXbdlT7C2Yzkj2IKimNn4k+gtPdI/k=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=

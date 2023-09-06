@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 
+	githubcomopenshiftapiroutev1 "github.com/openshift/api/route/v1"
 	k8sioapiadmissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	k8sioapiappsv1 "k8s.io/api/apps/v1"
 	k8sioapicertificatesv1 "k8s.io/api/certificates/v1"
@@ -87,6 +88,8 @@ func GetWriteClient[T runtime.Object](c ClientGetter, namespace string) ktypes.W
 		return c.GatewayAPI().GatewayV1beta1().ReferenceGrants(namespace).(ktypes.WriteAPI[T])
 	case *apiistioioapisecurityv1beta1.RequestAuthentication:
 		return c.Istio().SecurityV1beta1().RequestAuthentications(namespace).(ktypes.WriteAPI[T])
+	case *githubcomopenshiftapiroutev1.Route:
+		return c.Route().RouteV1().Routes(namespace).(ktypes.WriteAPI[T])
 	case *k8sioapicorev1.Secret:
 		return c.Kube().CoreV1().Secrets(namespace).(ktypes.WriteAPI[T])
 	case *k8sioapicorev1.Service:
@@ -176,6 +179,8 @@ func GetClient[T, TL runtime.Object](c ClientGetter, namespace string) ktypes.Re
 		return c.GatewayAPI().GatewayV1beta1().ReferenceGrants(namespace).(ktypes.ReadWriteAPI[T, TL])
 	case *apiistioioapisecurityv1beta1.RequestAuthentication:
 		return c.Istio().SecurityV1beta1().RequestAuthentications(namespace).(ktypes.ReadWriteAPI[T, TL])
+	case *githubcomopenshiftapiroutev1.Route:
+		return c.Route().RouteV1().Routes(namespace).(ktypes.ReadWriteAPI[T, TL])
 	case *k8sioapicorev1.Secret:
 		return c.Kube().CoreV1().Secrets(namespace).(ktypes.ReadWriteAPI[T, TL])
 	case *k8sioapicorev1.Service:
@@ -265,6 +270,8 @@ func gvrToObject(g schema.GroupVersionResource) runtime.Object {
 		return &sigsk8siogatewayapiapisv1beta1.ReferenceGrant{}
 	case gvr.RequestAuthentication:
 		return &apiistioioapisecurityv1beta1.RequestAuthentication{}
+	case gvr.Route:
+		return &githubcomopenshiftapiroutev1.Route{}
 	case gvr.Secret:
 		return &k8sioapicorev1.Secret{}
 	case gvr.Service:
@@ -486,6 +493,13 @@ func getInformerFiltered(c ClientGetter, opts ktypes.InformerOptions, g schema.G
 		}
 		w = func(namespace string, options metav1.ListOptions) (watch.Interface, error) {
 			return c.Istio().SecurityV1beta1().RequestAuthentications(namespace).Watch(context.Background(), options)
+		}
+	case gvr.Route:
+		l = func(namespace string, options metav1.ListOptions) (runtime.Object, error) {
+			return c.Route().RouteV1().Routes(namespace).List(context.Background(), options)
+		}
+		w = func(namespace string, options metav1.ListOptions) (watch.Interface, error) {
+			return c.Route().RouteV1().Routes(namespace).Watch(context.Background(), options)
 		}
 	case gvr.Secret:
 		l = func(namespace string, options metav1.ListOptions) (runtime.Object, error) {

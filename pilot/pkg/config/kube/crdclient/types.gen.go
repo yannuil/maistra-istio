@@ -14,6 +14,7 @@ import (
 	"istio.io/istio/pkg/config/schema/gvk"
 	"istio.io/istio/pkg/kube"
 
+	githubcomopenshiftapiroutev1 "github.com/openshift/api/route/v1"
 	k8sioapiadmissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	k8sioapiappsv1 "k8s.io/api/apps/v1"
 	k8sioapicertificatesv1 "k8s.io/api/certificates/v1"
@@ -99,6 +100,11 @@ func create(c kube.Client, cfg config.Config, objMeta metav1.ObjectMeta) (metav1
 		return c.Istio().SecurityV1beta1().RequestAuthentications(cfg.Namespace).Create(context.TODO(), &apiistioioapisecurityv1beta1.RequestAuthentication{
 			ObjectMeta: objMeta,
 			Spec:       *(cfg.Spec.(*istioioapisecurityv1beta1.RequestAuthentication)),
+		}, metav1.CreateOptions{})
+	case gvk.Route:
+		return c.Route().RouteV1().Routes(cfg.Namespace).Create(context.TODO(), &githubcomopenshiftapiroutev1.Route{
+			ObjectMeta: objMeta,
+			Spec:       *(cfg.Spec.(*githubcomopenshiftapiroutev1.RouteSpec)),
 		}, metav1.CreateOptions{})
 	case gvk.ServiceEntry:
 		return c.Istio().NetworkingV1alpha3().ServiceEntries(cfg.Namespace).Create(context.TODO(), &apiistioioapinetworkingv1alpha3.ServiceEntry{
@@ -217,6 +223,11 @@ func update(c kube.Client, cfg config.Config, objMeta metav1.ObjectMeta) (metav1
 			ObjectMeta: objMeta,
 			Spec:       *(cfg.Spec.(*istioioapisecurityv1beta1.RequestAuthentication)),
 		}, metav1.UpdateOptions{})
+	case gvk.Route:
+		return c.Route().RouteV1().Routes(cfg.Namespace).Update(context.TODO(), &githubcomopenshiftapiroutev1.Route{
+			ObjectMeta: objMeta,
+			Spec:       *(cfg.Spec.(*githubcomopenshiftapiroutev1.RouteSpec)),
+		}, metav1.UpdateOptions{})
 	case gvk.ServiceEntry:
 		return c.Istio().NetworkingV1alpha3().ServiceEntries(cfg.Namespace).Update(context.TODO(), &apiistioioapinetworkingv1alpha3.ServiceEntry{
 			ObjectMeta: objMeta,
@@ -328,6 +339,11 @@ func updateStatus(c kube.Client, cfg config.Config, objMeta metav1.ObjectMeta) (
 		return c.Istio().SecurityV1beta1().RequestAuthentications(cfg.Namespace).UpdateStatus(context.TODO(), &apiistioioapisecurityv1beta1.RequestAuthentication{
 			ObjectMeta: objMeta,
 			Status:     *(cfg.Status.(*istioioapimetav1alpha1.IstioStatus)),
+		}, metav1.UpdateOptions{})
+	case gvk.Route:
+		return c.Route().RouteV1().Routes(cfg.Namespace).UpdateStatus(context.TODO(), &githubcomopenshiftapiroutev1.Route{
+			ObjectMeta: objMeta,
+			Status:     *(cfg.Status.(*githubcomopenshiftapiroutev1.RouteStatus)),
 		}, metav1.UpdateOptions{})
 	case gvk.ServiceEntry:
 		return c.Istio().NetworkingV1alpha3().ServiceEntries(cfg.Namespace).UpdateStatus(context.TODO(), &apiistioioapinetworkingv1alpha3.ServiceEntry{
@@ -569,6 +585,21 @@ func patch(c kube.Client, orig config.Config, origMeta metav1.ObjectMeta, mod co
 		}
 		return c.Istio().SecurityV1beta1().RequestAuthentications(orig.Namespace).
 			Patch(context.TODO(), orig.Name, typ, patchBytes, metav1.PatchOptions{FieldManager: "pilot-discovery"})
+	case gvk.Route:
+		oldRes := &githubcomopenshiftapiroutev1.Route{
+			ObjectMeta: origMeta,
+			Spec:       *(orig.Spec.(*githubcomopenshiftapiroutev1.RouteSpec)),
+		}
+		modRes := &githubcomopenshiftapiroutev1.Route{
+			ObjectMeta: modMeta,
+			Spec:       *(mod.Spec.(*githubcomopenshiftapiroutev1.RouteSpec)),
+		}
+		patchBytes, err := genPatchBytes(oldRes, modRes, typ)
+		if err != nil {
+			return nil, err
+		}
+		return c.Route().RouteV1().Routes(orig.Namespace).
+			Patch(context.TODO(), orig.Name, typ, patchBytes, metav1.PatchOptions{FieldManager: "pilot-discovery"})
 	case gvk.ServiceEntry:
 		oldRes := &apiistioioapinetworkingv1alpha3.ServiceEntry{
 			ObjectMeta: origMeta,
@@ -754,6 +785,8 @@ func delete(c kube.Client, typ config.GroupVersionKind, name, namespace string, 
 		return c.GatewayAPI().GatewayV1beta1().ReferenceGrants(namespace).Delete(context.TODO(), name, deleteOptions)
 	case gvk.RequestAuthentication:
 		return c.Istio().SecurityV1beta1().RequestAuthentications(namespace).Delete(context.TODO(), name, deleteOptions)
+	case gvk.Route:
+		return c.Route().RouteV1().Routes(namespace).Delete(context.TODO(), name, deleteOptions)
 	case gvk.ServiceEntry:
 		return c.Istio().NetworkingV1alpha3().ServiceEntries(namespace).Delete(context.TODO(), name, deleteOptions)
 	case gvk.Sidecar:
@@ -1247,6 +1280,25 @@ var translationMap = map[config.GroupVersionKind]func(r runtime.Object) config.C
 		return config.Config{
 			Meta: config.Meta{
 				GroupVersionKind:  gvk.RequestAuthentication,
+				Name:              obj.Name,
+				Namespace:         obj.Namespace,
+				Labels:            obj.Labels,
+				Annotations:       obj.Annotations,
+				ResourceVersion:   obj.ResourceVersion,
+				CreationTimestamp: obj.CreationTimestamp.Time,
+				OwnerReferences:   obj.OwnerReferences,
+				UID:               string(obj.UID),
+				Generation:        obj.Generation,
+			},
+			Spec:   &obj.Spec,
+			Status: &obj.Status,
+		}
+	},
+	gvk.Route: func(r runtime.Object) config.Config {
+		obj := r.(*githubcomopenshiftapiroutev1.Route)
+		return config.Config{
+			Meta: config.Meta{
+				GroupVersionKind:  gvk.Route,
 				Name:              obj.Name,
 				Namespace:         obj.Namespace,
 				Labels:            obj.Labels,

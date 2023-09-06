@@ -35,6 +35,7 @@ var (
 	ProxyConfig                    = schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1beta1", Resource: "proxyconfigs"}
 	ReferenceGrant                 = schema.GroupVersionResource{Group: "gateway.networking.k8s.io", Version: "v1beta1", Resource: "referencegrants"}
 	RequestAuthentication          = schema.GroupVersionResource{Group: "security.istio.io", Version: "v1beta1", Resource: "requestauthentications"}
+	Route                          = schema.GroupVersionResource{Group: "route.openshift.io", Version: "v1", Resource: "Routes"}
 	Secret                         = schema.GroupVersionResource{Group: "", Version: "v1", Resource: "secrets"}
 	Service                        = schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
 	ServiceAccount                 = schema.GroupVersionResource{Group: "", Version: "v1", Resource: "serviceaccounts"}
@@ -109,6 +110,8 @@ func IsClusterScoped(g schema.GroupVersionResource) bool {
 	case ReferenceGrant:
 		return false
 	case RequestAuthentication:
+		return false
+	case Route:
 		return false
 	case Secret:
 		return false

@@ -17,6 +17,7 @@ package kubeclient
 import (
 	"context"
 
+	routeclient "github.com/openshift/client-go/route/clientset/versioned"
 	kubeext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -52,6 +53,9 @@ type ClientGetter interface {
 
 	// Istio returns the Istio kube client.
 	Istio() istioclient.Interface
+
+	// Route returns the openshift route client.
+	Route() routeclient.Interface
 
 	// GatewayAPI returns the gateway-api kube client.
 	GatewayAPI() gatewayapiclient.Interface

@@ -8,6 +8,7 @@ package collections
 import (
 	"reflect"
 
+	githubcomopenshiftapiroutev1 "github.com/openshift/api/route/v1"
 	k8sioapiadmissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	k8sioapiappsv1 "k8s.io/api/apps/v1"
 	k8sioapicertificatesv1 "k8s.io/api/certificates/v1"
@@ -476,6 +477,21 @@ var (
 		ValidateProto: validation.ValidateRequestAuthentication,
 	}.MustBuild()
 
+	Route = resource.Builder{
+		Identifier: "Route",
+		Group:      "route.openshift.io",
+		Kind:       "Route",
+		Plural:     "Routes",
+		Version:    "v1",
+		Proto:      "github.com.openshift.api.route.v1.RouteSpec", StatusProto: "github.com.openshift.api.route.v1.RouteStatus",
+		ReflectType: reflect.TypeOf(&githubcomopenshiftapiroutev1.RouteSpec{}).Elem(), StatusType: reflect.TypeOf(&githubcomopenshiftapiroutev1.RouteStatus{}).Elem(),
+		ProtoPackage: "github.com/openshift/api/route/v1", StatusPackage: "github.com/openshift/api/route/v1",
+		ClusterScoped: false,
+		Synthetic:     false,
+		Builtin:       false,
+		ValidateProto: validation.EmptyValidate,
+	}.MustBuild()
+
 	Secret = resource.Builder{
 		Identifier:    "Secret",
 		Group:         "",
@@ -746,6 +762,7 @@ var (
 		MustAdd(ProxyConfig).
 		MustAdd(ReferenceGrant).
 		MustAdd(RequestAuthentication).
+		MustAdd(Route).
 		MustAdd(Secret).
 		MustAdd(Service).
 		MustAdd(ServiceAccount).

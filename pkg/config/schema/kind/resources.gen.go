@@ -38,6 +38,7 @@ const (
 	ProxyConfig
 	ReferenceGrant
 	RequestAuthentication
+	Route
 	Secret
 	Service
 	ServiceAccount
@@ -117,6 +118,8 @@ func (k Kind) String() string {
 		return "ReferenceGrant"
 	case RequestAuthentication:
 		return "RequestAuthentication"
+	case Route:
+		return "Route"
 	case Secret:
 		return "Secret"
 	case Service:
@@ -210,6 +213,8 @@ func MustFromGVK(g config.GroupVersionKind) Kind {
 		return ReferenceGrant
 	case gvk.RequestAuthentication:
 		return RequestAuthentication
+	case gvk.Route:
+		return Route
 	case gvk.Secret:
 		return Secret
 	case gvk.Service:
