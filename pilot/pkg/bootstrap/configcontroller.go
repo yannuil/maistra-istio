@@ -39,7 +39,6 @@ import (
 	"istio.io/istio/pkg/config/schema/collections"
 	"istio.io/istio/pkg/config/schema/gvr"
 	"istio.io/istio/pkg/log"
-	"istio.io/istio/pkg/revisions"
 )
 
 // URL schemes supported by the config store
@@ -182,22 +181,14 @@ func (s *Server) initK8SConfigStore(args *PilotArgs) error {
 					AddRunFunction(func(leaderStop <-chan struct{}) {
 						// We can only run this if the Gateway CRD is created
 						if s.kubeClient.CrdWatcher().WaitForCRD(gvr.KubernetesGateway, leaderStop) {
-							var tagWatcher revisions.TagWatcher
-							// TagWatcher requires permission for MutatingWebhook, so it can't be used in multi-tenant mode
-							if !s.kubeClient.IsMultiTenant() {
-								tagWatcher = revisions.NewTagWatcher(s.kubeClient, args.Revision)
-							}
 							controller := gateway.NewDeploymentController(s.kubeClient, s.clusterID, s.environment,
-								s.webhookInfo.getWebhookConfig, s.webhookInfo.addHandler, tagWatcher, args.Revision)
+								s.webhookInfo.getWebhookConfig, s.webhookInfo.addHandler, args.Revision)
 							// Start informers again. This fixes the case where informers for namespace do not start,
 							// as we create them only after acquiring the leader lock
 							// Note: stop here should be the overall pilot stop, NOT the leader election stop. We are
 							// basically lazy loading the informer, if we stop it when we lose the lock we will never
 							// recreate it again.
 							s.kubeClient.RunAndWait(stop)
-							if tagWatcher != nil {
-								go tagWatcher.Run(leaderStop)
-							}
 							controller.Run(leaderStop)
 						}
 					}).

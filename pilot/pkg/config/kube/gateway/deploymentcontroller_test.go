@@ -47,7 +47,6 @@ import (
 	"istio.io/istio/pkg/kube/kclient"
 	"istio.io/istio/pkg/kube/kclient/clienttest"
 	istiolog "istio.io/istio/pkg/log"
-	"istio.io/istio/pkg/revisions"
 	"istio.io/istio/pkg/test"
 	"istio.io/istio/pkg/test/env"
 	"istio.io/istio/pkg/test/util/assert"
@@ -238,11 +237,9 @@ func TestConfigureIstioGateway(t *testing.T) {
 			stop := test.NewStop(t)
 			env := model.NewEnvironment()
 			env.PushContext().ProxyConfigs = tt.pcs
-			tw := revisions.NewTagWatcher(client, "")
-			go tw.Run(stop)
 			d := NewDeploymentController(
 				client, cluster.ID(features.ClusterName), env, testInjectionConfig(t), func(fn func()) {
-				}, tw, "")
+				}, "")
 			d.patcher = func(gvr schema.GroupVersionResource, name string, namespace string, data []byte, subresources ...string) error {
 				b, err := yaml.JSONToYAML(data)
 				if err != nil {
@@ -270,9 +267,8 @@ func TestVersionManagement(t *testing.T) {
 			Name: "default",
 		},
 	})
-	tw := revisions.NewTagWatcher(c, "default")
 	env := &model.Environment{}
-	d := NewDeploymentController(c, "", env, testInjectionConfig(t), func(fn func()) {}, tw, "")
+	d := NewDeploymentController(c, "", env, testInjectionConfig(t), func(fn func()) {}, "")
 	reconciles := atomic.NewInt32(0)
 	wantReconcile := int32(0)
 	expectReconciled := func() {
@@ -296,7 +292,6 @@ func TestVersionManagement(t *testing.T) {
 	}
 	stop := test.NewStop(t)
 	gws := clienttest.Wrap(t, d.gateways)
-	go tw.Run(stop)
 	go d.Run(stop)
 	c.RunAndWait(stop)
 	kube.WaitForCacheSync("test", stop, d.queue.HasSynced)
