@@ -32,6 +32,7 @@ import (
 	"runtime/debug"
 	"sync"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/cache"
 
@@ -40,10 +41,9 @@ import (
 	"istio.io/istio/pkg/kube/kubetypes"
 	"istio.io/istio/pkg/log"
 	"istio.io/istio/pkg/util/sets"
-)
 
-// NewInformerFunc returns a SharedIndexInformer.
-type NewInformerFunc func() cache.SharedIndexInformer
+	xnsinformers "github.com/maistra/xns-informer/pkg/informers"
+)
 
 type StartableInformer struct {
 	Informer cache.SharedIndexInformer
@@ -56,12 +56,14 @@ func (s StartableInformer) Start(stopCh <-chan struct{}) {
 
 // InformerFactory provides access to a shared informer factory
 type InformerFactory interface {
+	SetNamespaces(namespaces []string)
+
 	// Start initializes all requested informers. They are handled in goroutines
 	// which run until the stop channel gets closed.
 	Start(stopCh <-chan struct{})
 
 	// InformerFor returns the SharedIndexInformer the provided type.
-	InformerFor(resource schema.GroupVersionResource, opts kubetypes.InformerOptions, newFunc NewInformerFunc) StartableInformer
+	InformerFor(resource schema.GroupVersionResource, opts kubetypes.InformerOptions, newFunc xnsinformers.NewInformerFunc) StartableInformer
 
 	// WaitForCacheSync blocks until all started informers' caches were synced
 	// or the stop channel gets closed.
@@ -85,6 +87,7 @@ func NewSharedInformerFactory() InformerFactory {
 	return &informerFactory{
 		informers:        map[informerKey]builtInformer{},
 		startedInformers: sets.New[informerKey](),
+		namespaces:       xnsinformers.NewNamespaceSet(metav1.NamespaceAll),
 	}
 }
 
@@ -114,11 +117,25 @@ type informerFactory struct {
 	// shuttingDown is true when Shutdown has been called. It may still be running
 	// because it needs to wait for goroutines.
 	shuttingDown bool
+
+	namespaces xnsinformers.NamespaceSet
 }
 
 var _ InformerFactory = &informerFactory{}
 
-func (f *informerFactory) InformerFor(resource schema.GroupVersionResource, opts kubetypes.InformerOptions, newFunc NewInformerFunc) StartableInformer {
+// SetNamespaces updates the set of namespaces for all current and future informers.
+func (f *informerFactory) SetNamespaces(namespaces []string) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
+	f.namespaces.SetNamespaces(namespaces)
+}
+
+func (f *informerFactory) InformerFor(
+	resource schema.GroupVersionResource,
+	opts kubetypes.InformerOptions,
+	newFunc xnsinformers.NewInformerFunc,
+) StartableInformer {
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
@@ -135,7 +152,7 @@ func (f *informerFactory) InformerFor(resource schema.GroupVersionResource, opts
 		return f.makeStartableInformer(inf.informer, key)
 	}
 
-	informer := newFunc()
+	informer := xnsinformers.NewMultiNamespaceInformer(f.namespaces, 0, newFunc)
 	f.informers[key] = builtInformer{
 		informer:        informer,
 		objectTransform: opts.ObjectTransform,

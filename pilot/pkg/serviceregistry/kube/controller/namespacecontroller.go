@@ -15,6 +15,7 @@
 package controller
 
 import (
+	xnsinformers "github.com/maistra/xns-informer/pkg/informers"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -56,6 +57,7 @@ type NamespaceController struct {
 
 	// if meshConfig.DiscoverySelectors specified, DiscoveryNamespacesFilter tracks the namespaces to be watched by this controller.
 	DiscoveryNamespacesFilter namespace.DiscoveryNamespacesFilter
+	namespaceSet              xnsinformers.NamespaceSet
 }
 
 // NewNamespaceController returns a pointer to a newly constructed NamespaceController instance.
@@ -81,6 +83,22 @@ func NewNamespaceController(kubeClient kube.Client, caBundleWatcher *keycertbund
 		return !inject.IgnoredNamespaces.Contains(o.GetNamespace())
 	}))
 
+	// If a MemberRoll controller is configured on the client, skip creating the
+	// namespace informer and just respond to changes in the MemberRoll.
+	if mrc := kubeClient.GetMemberRollController(); mrc != nil {
+		c.namespaceSet = xnsinformers.NewNamespaceSet()
+		c.namespaceSet.AddHandler(xnsinformers.NamespaceSetHandlerFuncs{
+			AddFunc: func(ns string) {
+				if err := c.reconcileCACert(types.NamespacedName{Namespace: "", Name: ns}); err != nil {
+					log.Errorf("error inserting data for namespace: %v", err)
+				}
+			},
+		})
+
+		mrc.Register(c.namespaceSet, "namespace-controller")
+		return c
+	}
+
 	if c.DiscoveryNamespacesFilter != nil {
 		c.DiscoveryNamespacesFilter.AddHandler(func(ns string, event model.Event) {
 			c.syncNamespace(ns)
@@ -98,6 +116,7 @@ func NewNamespaceController(kubeClient kube.Client, caBundleWatcher *keycertbund
 			return true
 		}))
 	}
+
 	return c
 }
 
@@ -126,8 +145,14 @@ func (nc *NamespaceController) startCaBundleWatcher(stop <-chan struct{}) {
 	for {
 		select {
 		case <-watchCh:
-			for _, ns := range nc.namespaces.List("", labels.Everything()) {
-				nc.namespaceChange(ns)
+			if nc.namespaceSet != nil {
+				for _, ns := range nc.namespaceSet.List() {
+					nc.syncNamespace(ns)
+				}
+			} else {
+				for _, ns := range nc.namespaces.List("", labels.Everything()) {
+					nc.namespaceChange(ns)
+				}
 			}
 		case <-stop:
 			return

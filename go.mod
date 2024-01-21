@@ -56,6 +56,7 @@ require (
 	github.com/kr/pretty v0.3.1
 	github.com/kylelemons/godebug v1.1.0
 	github.com/lestrrat-go/jwx v1.2.26
+	github.com/maistra/xns-informer v0.0.0-20240111171525-5bf033eae7f0
 	github.com/mattn/go-isatty v0.0.19
 	github.com/miekg/dns v1.1.56
 	github.com/mitchellh/copystructure v1.2.0
@@ -94,7 +95,7 @@ require (
 	golang.org/x/net v0.17.0
 	golang.org/x/oauth2 v0.13.0
 	golang.org/x/sync v0.4.0
-	golang.org/x/sys v0.13.0
+	golang.org/x/sys v0.15.0
 	golang.org/x/time v0.3.0
 	gomodules.xyz/jsonpatch/v2 v2.4.0
 	google.golang.org/api v0.147.0
@@ -108,8 +109,9 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.12.3
-	istio.io/api v1.20.0-rc.0
-	istio.io/client-go v1.20.0-rc.0
+	istio.io/api v1.20.2-0.20231213020515-8655fab91d5d
+	istio.io/client-go v1.20.2-0.20231213021015-d9f0411d8b67
+	istio.io/pkg v0.0.0-20231221211216-7635388a563e
 	k8s.io/api v0.28.3
 	k8s.io/apiextensions-apiserver v0.28.3
 	k8s.io/apimachinery v0.28.3
@@ -119,8 +121,9 @@ require (
 	k8s.io/klog/v2 v2.100.1
 	k8s.io/kubectl v0.28.0
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
+	maistra.io/api v0.0.0-20230704084350-dfc96815fb16
 	sigs.k8s.io/controller-runtime v0.16.3
-	sigs.k8s.io/gateway-api v1.0.0
+	sigs.k8s.io/gateway-api v1.0.1-0.20231102234152-004e14bfe016
 	sigs.k8s.io/mcs-api v0.1.0
 	sigs.k8s.io/yaml v1.4.0
 )
@@ -234,10 +237,10 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/mod v0.13.0 // indirect
-	golang.org/x/term v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/term v0.15.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.14.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
@@ -249,3 +252,7 @@ require (
 	sigs.k8s.io/kustomize/kyaml v0.14.3 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.3.0 // indirect
 )
+
+replace github.com/maistra/xns-informer => github.com/yannuil/maistra-xns-informer v0.0.0-20240116131234-eab1c1fa9f14
+
+replace maistra.io/api => github.com/yannuil/maistra-api v0.0.0-20240119192315-632fdef65077
