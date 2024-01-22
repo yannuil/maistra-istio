@@ -152,7 +152,14 @@ func (f *informerFactory) InformerFor(
 		return f.makeStartableInformer(inf.informer, key)
 	}
 
-	informer := xnsinformers.NewMultiNamespaceInformer(f.namespaces, 0, newFunc)
+	var informer xnsinformers.MultiNamespaceInformer
+
+	if opts.Namespace != "" {
+		informer = xnsinformers.NewMultiNamespaceInformer(xnsinformers.NewNamespaceSet(opts.Namespace), 0, newFunc)
+	} else {
+		informer = xnsinformers.NewMultiNamespaceInformer(f.namespaces, 0, newFunc)
+	}
+
 	f.informers[key] = builtInformer{
 		informer:        informer,
 		objectTransform: opts.ObjectTransform,
