@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
+	xnsinformers "github.com/maistra/xns-informer/pkg/informers"
 	"go.uber.org/atomic"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/credentials"
@@ -245,7 +246,11 @@ func NewFakeClient(objects ...runtime.Object) CLIClient {
 		Host: "server",
 	}
 
-	c.informerFactory = informerfactory.NewSharedInformerFactory()
+	var namespaceSet xnsinformers.NamespaceSet
+	if c.GetMemberRollController() != nil {
+		namespaceSet = xnsinformers.NewNamespaceSet(metav1.NamespaceAll)
+	}
+	c.informerFactory = informerfactory.NewSharedInformerFactory(&namespaceSet)
 	s := FakeIstioScheme
 
 	c.metadata = metadatafake.NewSimpleMetadataClient(s)
@@ -393,7 +398,12 @@ func newClientInternal(clientFactory *clientFactory, revision string, cluster cl
 		return nil, err
 	}
 
-	c.informerFactory = informerfactory.NewSharedInformerFactory()
+	var namespaceSet xnsinformers.NamespaceSet
+
+	if c.GetMemberRollController() != nil {
+		namespaceSet = xnsinformers.NewNamespaceSet(metav1.NamespaceAll)
+	}
+	c.informerFactory = informerfactory.NewSharedInformerFactory(&namespaceSet)
 
 	c.kube, err = kubernetes.NewForConfig(c.config)
 	if err != nil {

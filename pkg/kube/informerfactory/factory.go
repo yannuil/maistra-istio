@@ -83,11 +83,11 @@ type InformerFactory interface {
 }
 
 // NewSharedInformerFactory constructs a new instance of informerFactory for all namespaces.
-func NewSharedInformerFactory() InformerFactory {
+func NewSharedInformerFactory(namespaceSet *xnsinformers.NamespaceSet) InformerFactory {
 	return &informerFactory{
 		informers:        map[informerKey]builtInformer{},
 		startedInformers: sets.New[informerKey](),
-		namespaces:       xnsinformers.NewNamespaceSet(metav1.NamespaceAll),
+		namespaces:       *namespaceSet,
 	}
 }
 
@@ -152,12 +152,16 @@ func (f *informerFactory) InformerFor(
 		return f.makeStartableInformer(inf.informer, key)
 	}
 
-	var informer xnsinformers.MultiNamespaceInformer
+	var informer cache.SharedIndexInformer
 
 	if opts.Namespace != "" {
-		informer = xnsinformers.NewMultiNamespaceInformer(xnsinformers.NewNamespaceSet(opts.Namespace), 0, newFunc)
+		informer = newFunc(opts.Namespace)
 	} else {
-		informer = xnsinformers.NewMultiNamespaceInformer(f.namespaces, 0, newFunc)
+		if f.namespaces != nil {
+			informer = xnsinformers.NewMultiNamespaceInformer(f.namespaces, 0, newFunc)
+		} else {
+			informer = newFunc(metav1.NamespaceAll)
+		}
 	}
 
 	f.informers[key] = builtInformer{
