@@ -36,7 +36,7 @@ require (
 	github.com/florianl/go-nflog/v2 v2.0.1
 	github.com/florianl/go-tc v0.4.2
 	github.com/fsnotify/fsnotify v1.7.0
-	github.com/go-logr/logr v1.2.4
+	github.com/go-logr/logr v1.3.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.5.3
 	github.com/google/cel-go v0.16.1
@@ -63,7 +63,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/moby/buildkit v0.12.1
 	github.com/onsi/gomega v1.27.10
-	github.com/openshift/api v0.0.0-20230823114715-5fdd7511b790
+	github.com/openshift/api v0.0.0-20231212152002-ef62af078a93
 	github.com/pires/go-proxyproto v0.7.0
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 	github.com/prometheus/client_golang v1.17.0
@@ -123,7 +123,7 @@ require (
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
 	maistra.io/api v0.0.0-20230704084350-dfc96815fb16
 	sigs.k8s.io/controller-runtime v0.16.3
-	sigs.k8s.io/gateway-api v1.0.1-0.20231102234152-004e14bfe016
+	sigs.k8s.io/gateway-api v1.0.0
 	sigs.k8s.io/mcs-api v0.1.0
 	sigs.k8s.io/yaml v1.4.0
 )
@@ -250,9 +250,9 @@ require (
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/kustomize/api v0.13.5-0.20230601165947-6ce0bf390ce3 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.14.3 // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.3.0 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 )
 
-replace github.com/maistra/xns-informer => github.com/yannuil/maistra-xns-informer v0.0.0-20240116131234-eab1c1fa9f14
+replace github.com/maistra/xns-informer => github.com/yannuil/maistra-xns-informer v0.0.0-20240129091448-e34587be7ad1
 
-replace maistra.io/api => github.com/yannuil/maistra-api v0.0.0-20240119192315-632fdef65077
+replace maistra.io/api => github.com/yannuil/maistra-api v0.0.0-20240129092050-f6b2453efd2d

@@ -32,6 +32,7 @@ import (
 	"runtime/debug"
 	"sync"
 
+	xnsinformers "github.com/maistra/xns-informer/pkg/informers"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/cache"
@@ -41,8 +42,6 @@ import (
 	"istio.io/istio/pkg/kube/kubetypes"
 	"istio.io/istio/pkg/log"
 	"istio.io/istio/pkg/util/sets"
-
-	xnsinformers "github.com/maistra/xns-informer/pkg/informers"
 )
 
 type StartableInformer struct {
