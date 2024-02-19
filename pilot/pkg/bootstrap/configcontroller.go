@@ -306,7 +306,7 @@ func (s *Server) initInprocessAnalysisController(args *PilotArgs) error {
 			AddRunFunction(func(leaderStop <-chan struct{}) {
 				opts := args.RegistryOptions.KubeOptions
 				cont, err := incluster.NewController(leaderStop, s.RWConfigStore,
-					s.kubeClient, args.Revision, args.Namespace, s.statusManager, opts.DomainSuffix, opts.EnableCRDScan)
+					s.kubeClient, args.Revision, args.Namespace, s.statusManager, opts.DomainSuffix)
 				if err != nil {
 					return
 				}
@@ -354,10 +354,9 @@ func (s *Server) initStatusController(args *PilotArgs, writeStatus bool) {
 
 func (s *Server) makeKubeConfigController(args *PilotArgs) *crdclient.Client {
 	opts := crdclient.Option{
-		Revision:      args.Revision,
-		DomainSuffix:  args.RegistryOptions.KubeOptions.DomainSuffix,
-		Identifier:    "crd-controller",
-		EnableCRDScan: args.RegistryOptions.KubeOptions.EnableCRDScan,
+		Revision:     args.Revision,
+		DomainSuffix: args.RegistryOptions.KubeOptions.DomainSuffix,
+		Identifier:   "crd-controller",
 	}
 	if args.RegistryOptions.KubeOptions.DiscoveryNamespacesFilter != nil {
 		opts.NamespacesFilter = args.RegistryOptions.KubeOptions.DiscoveryNamespacesFilter.Filter
