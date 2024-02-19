@@ -284,11 +284,10 @@ func NewController(kubeClient kubelib.Client, options Options) *Controller {
 		if c.opts.DiscoveryNamespacesFilter == nil {
 			c.opts.DiscoveryNamespacesFilter = namespace.NewDiscoveryNamespacesFilter(c.namespaces, options.MeshWatcher.Mesh().DiscoverySelectors)
 		}
-
-		c.initDiscoveryHandlers(options.MeshWatcher, c.opts.DiscoveryNamespacesFilter)
 	} else if c.opts.DiscoveryNamespacesFilter == nil {
 		c.opts.DiscoveryNamespacesFilter = namespace.NewMaistraDiscoveryNamespacesFilter(kubeClient.GetMemberRollController())
 	}
+	c.initDiscoveryHandlers(options.MeshWatcher, c.opts.DiscoveryNamespacesFilter)
 
 	c.services = kclient.NewFiltered[*v1.Service](kubeClient, kclient.Filter{ObjectFilter: c.opts.DiscoveryNamespacesFilter.Filter})
 
