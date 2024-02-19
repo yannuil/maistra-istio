@@ -271,6 +271,7 @@ func (d *discoveryNamespacesFilter) isSelected(labels labels.Set) bool {
 type maistraDiscoveryNamespacesFilter struct {
 	lock       sync.RWMutex
 	namespaces sets.String
+	handlers   []func(ns string, event model.Event)
 }
 
 func NewMaistraDiscoveryNamespacesFilter(mrc memberroll.MemberRollController) DiscoveryNamespacesFilter {
@@ -298,7 +299,7 @@ func (d *maistraDiscoveryNamespacesFilter) FilterNamespace(nsMeta metav1.ObjectM
 
 // SelectorsChanged is not implemented, because Maistra does not filter namespaces by selectors;
 // this function should never be called if memberRollName is specified, so it's safe to call panic.
-func (d *maistraDiscoveryNamespacesFilter) SelectorsChanged(_ []*metav1.LabelSelector) (selectedNamespaces []string, deselectedNamespaces []string) {
+func (d *maistraDiscoveryNamespacesFilter) SelectorsChanged(discoverySelectors []*metav1.LabelSelector) {
 	panic("Not implemented")
 }
 
@@ -332,4 +333,15 @@ func (d *maistraDiscoveryNamespacesFilter) GetMembers() sets.String {
 	members := sets.New[string]()
 	members.InsertAll(d.namespaces.UnsortedList()...)
 	return members
+}
+
+// AddHandler registers a handler on namespace, which will be triggered when namespace selected or deselected.
+// If the namespaces have been synced, trigger the new added handler.
+func (d *maistraDiscoveryNamespacesFilter) AddHandler(f func(ns string, event model.Event)) {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+	for ns := range d.namespaces {
+		f(ns, model.EventAdd)
+	}
+	d.handlers = append(d.handlers, f)
 }
