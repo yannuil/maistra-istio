@@ -127,9 +127,11 @@ func NewController(kubeclientset kube.Client, namespace string, clusterID cluste
 		secrets:             secrets,
 	}
 
-	namespaces := kclient.New[*corev1.Namespace](kubeclientset)
-	controller.namespaces = namespaces
-	controller.DiscoveryNamespacesFilter = filter.NewDiscoveryNamespacesFilter(namespaces, meshWatcher.Mesh().GetDiscoverySelectors())
+	if !kubeclientset.IsMultiTenant() {
+		namespaces := kclient.New[*corev1.Namespace](kubeclientset)
+		controller.namespaces = namespaces
+		controller.DiscoveryNamespacesFilter = filter.NewDiscoveryNamespacesFilter(namespaces, meshWatcher.Mesh().GetDiscoverySelectors())
+	}
 	// Queue does NOT retry. The only error that can occur is if the kubeconfig is
 	// malformed. This is a static analysis that cannot be resolved by retry. Actual
 	// connectivity issues would result in HasSynced returning false rather than an
