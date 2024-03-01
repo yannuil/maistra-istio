@@ -363,7 +363,7 @@ func (cl *Client) addCRD(name string) {
 		return config.LabelsInRevision(t.(controllers.Object).GetLabels(), cl.revision)
 	}
 	var kc kclient.Untyped
-	if s.IsBuiltin() {
+	if s.IsBuiltin() || cl.client.CrdWatcher() == nil {
 		kc = kclient.NewUntypedInformer(cl.client, gvr, filter)
 	} else {
 		kc = kclient.NewDelayedInformer[controllers.Object](

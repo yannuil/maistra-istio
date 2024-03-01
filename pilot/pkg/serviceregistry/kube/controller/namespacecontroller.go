@@ -20,6 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/cache"
 
 	"istio.io/istio/pilot/pkg/features"
 	"istio.io/istio/pilot/pkg/keycertbundle"
@@ -76,7 +77,6 @@ func NewNamespaceController(kubeClient kube.Client, caBundleWatcher *keycertbund
 		FieldSelector: "metadata.name=" + CACertNamespaceConfigMap,
 		ObjectFilter:  c.GetFilter(),
 	})
-	c.namespaces = kclient.New[*v1.Namespace](kubeClient)
 
 	c.configmaps.AddEventHandler(controllers.FilteredObjectSpecHandler(c.queue.AddObject, func(o controllers.Object) bool {
 		// skip special kubernetes system namespaces
@@ -99,6 +99,7 @@ func NewNamespaceController(kubeClient kube.Client, caBundleWatcher *keycertbund
 		return c
 	}
 
+	c.namespaces = kclient.New[*v1.Namespace](kubeClient)
 	if c.DiscoveryNamespacesFilter != nil {
 		c.DiscoveryNamespacesFilter.AddHandler(func(ns string, event model.Event) {
 			c.syncNamespace(ns)
@@ -129,13 +130,21 @@ func (nc *NamespaceController) GetFilter() namespace.DiscoveryFilter {
 
 // Run starts the NamespaceController until a value is sent to stopCh.
 func (nc *NamespaceController) Run(stopCh <-chan struct{}) {
-	if !kube.WaitForCacheSync("namespace controller", stopCh, nc.namespaces.HasSynced, nc.configmaps.HasSynced) {
+	syncFuncs := []cache.InformerSynced{nc.configmaps.HasSynced}
+	shutdownFuncs := []controllers.Shutdowner{nc.configmaps}
+	// nc.namespaces is not set when member roll exists
+	if nc.namespaces != nil {
+		syncFuncs = append(syncFuncs, nc.namespaces.HasSynced)
+		shutdownFuncs = append(shutdownFuncs, nc.namespaces)
+	}
+	if !kube.WaitForCacheSync("namespace controller", stopCh, syncFuncs...) {
+		log.Error("Failed to sync namespace controller cache")
 		return
 	}
 
 	go nc.startCaBundleWatcher(stopCh)
 	nc.queue.Run(stopCh)
-	controllers.ShutdownAll(nc.configmaps, nc.namespaces)
+	controllers.ShutdownAll(shutdownFuncs...)
 }
 
 // startCaBundleWatcher listens for updates to the CA bundle and update cm in each namespace

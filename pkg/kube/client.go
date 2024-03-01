@@ -28,7 +28,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
-	xnsinformers "github.com/maistra/xns-informer/pkg/informers"
 	"go.uber.org/atomic"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/credentials"
@@ -246,11 +245,7 @@ func NewFakeClient(objects ...runtime.Object) CLIClient {
 		Host: "server",
 	}
 
-	var namespaceSet xnsinformers.NamespaceSet
-	if c.GetMemberRollController() != nil {
-		namespaceSet = xnsinformers.NewNamespaceSet(metav1.NamespaceAll)
-	}
-	c.informerFactory = informerfactory.NewSharedInformerFactory(&namespaceSet)
+	c.informerFactory = informerfactory.NewSharedInformerFactory()
 	s := FakeIstioScheme
 
 	c.metadata = metadatafake.NewSimpleMetadataClient(s)
@@ -398,12 +393,7 @@ func newClientInternal(clientFactory *clientFactory, revision string, cluster cl
 		return nil, err
 	}
 
-	var namespaceSet xnsinformers.NamespaceSet
-
-	if c.GetMemberRollController() != nil {
-		namespaceSet = xnsinformers.NewNamespaceSet(metav1.NamespaceAll)
-	}
-	c.informerFactory = informerfactory.NewSharedInformerFactory(&namespaceSet)
+	c.informerFactory = informerfactory.NewSharedInformerFactory()
 
 	c.kube, err = kubernetes.NewForConfig(c.config)
 	if err != nil {
@@ -540,6 +530,7 @@ func (c *client) AddMemberRollController(namespace, memberRollName string) (err 
 		return err
 	}
 
+	c.informerFactory.InitNamespaces()
 	c.memberRoll.Register(c.informerFactory, "informers")
 	return nil
 }
@@ -556,6 +547,9 @@ func (c *client) IsMultiTenant() bool {
 // Warning: this must be called AFTER .Informer() is called, which will register the informer.
 func (c *client) RunAndWait(stop <-chan struct{}) {
 	c.Run(stop)
+	if c.memberRoll != nil {
+		c.memberRoll.Start(stop)
+	}
 	if c.fastSync {
 		if c.crdWatcher != nil {
 			c.WaitForCacheSync("crd watcher", stop, c.crdWatcher.HasSynced)
@@ -667,7 +661,7 @@ func WaitForCacheSync(name string, stop <-chan struct{}, cacheSyncs ...cache.Inf
 		if delay > max {
 			delay = max
 		}
-		log.WithLabels("name", name, "attempt", attempt, "time", time.Since(t0)).Debugf("waiting for sync...")
+		// log.WithLabels("name", name, "attempt", attempt, "time", time.Since(t0)).Debugf("waiting for sync...")
 		if attempt%50 == 0 {
 			// Log every 50th attempt (5s) at info, to avoid too much noisy
 			log.WithLabels("name", name, "attempt", attempt, "time", time.Since(t0)).Infof("waiting for sync...")

@@ -88,11 +88,14 @@ func NewStatusSyncer(meshHolder mesh.Watcher, kc kubelib.Client, options kubecon
 
 	// For any ingress change, enqueue it - we may need to update the status.
 	c.ingresses.AddEventHandler(controllers.ObjectHandler(c.queue.AddObject))
-	// For any class change, sync all ingress; the handler will filter non-matching ones already
-	c.ingressClasses.AddEventHandler(controllers.ObjectHandler(func(o controllers.Object) {
-		// Just sync them all
-		c.enqueueAll()
-	}))
+	if options.EnableIngressClassName {
+		// For any class change, sync all ingress; the handler will filter non-matching ones already
+		c.ingressClasses.AddEventHandler(controllers.ObjectHandler(func(o controllers.Object) {
+			// Just sync them all
+			c.enqueueAll()
+		}))
+	}
+
 	// For services, we queue all Ingress if its the ingress service
 	c.services.AddEventHandler(controllers.ObjectHandler(func(o controllers.Object) {
 		if o.GetName() == c.meshConfig.Mesh().IngressService && o.GetNamespace() == IngressNamespace {

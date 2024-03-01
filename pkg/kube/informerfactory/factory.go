@@ -55,6 +55,7 @@ func (s StartableInformer) Start(stopCh <-chan struct{}) {
 
 // InformerFactory provides access to a shared informer factory
 type InformerFactory interface {
+	InitNamespaces()
 	SetNamespaces(namespaces []string)
 
 	// Start initializes all requested informers. They are handled in goroutines
@@ -82,11 +83,10 @@ type InformerFactory interface {
 }
 
 // NewSharedInformerFactory constructs a new instance of informerFactory for all namespaces.
-func NewSharedInformerFactory(namespaceSet *xnsinformers.NamespaceSet) InformerFactory {
+func NewSharedInformerFactory() InformerFactory {
 	return &informerFactory{
 		informers:        map[informerKey]builtInformer{},
 		startedInformers: sets.New[informerKey](),
-		namespaces:       *namespaceSet,
 	}
 }
 
@@ -121,6 +121,10 @@ type informerFactory struct {
 }
 
 var _ InformerFactory = &informerFactory{}
+
+func (f *informerFactory) InitNamespaces() {
+	f.namespaces = xnsinformers.NewNamespaceSet(metav1.NamespaceAll)
+}
 
 // SetNamespaces updates the set of namespaces for all current and future informers.
 func (f *informerFactory) SetNamespaces(namespaces []string) {
