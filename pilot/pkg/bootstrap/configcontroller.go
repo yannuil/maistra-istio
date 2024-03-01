@@ -20,6 +20,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	meshconfig "istio.io/api/mesh/v1alpha1"
 	"istio.io/istio/pilot/pkg/autoregistration"
@@ -138,11 +139,23 @@ func (s *Server) initK8SConfigStore(args *PilotArgs) error {
 	}
 	configController := s.makeKubeConfigController(args)
 	s.ConfigStores = append(s.ConfigStores, configController)
+
+	var WaitForCRD func(class schema.GroupVersionResource, stop <-chan struct{}) bool
+	if s.kubeClient.CrdWatcher() == nil {
+		WaitForCRD = func(class schema.GroupVersionResource, stop <-chan struct{}) bool {
+			return true
+		}
+	} else {
+		WaitForCRD = func(class schema.GroupVersionResource, stop <-chan struct{}) bool {
+			return s.kubeClient.CrdWatcher().WaitForCRD(class, stop)
+		}
+	}
+
 	if features.EnableGatewayAPI {
 		if s.statusManager == nil && features.EnableGatewayAPIStatus {
 			s.initStatusManager(args)
 		}
-		gwc := gateway.NewController(s.kubeClient, configController, s.kubeClient.CrdWatcher().WaitForCRD,
+		gwc := gateway.NewController(s.kubeClient, configController, WaitForCRD,
 			s.environment.CredentialsController, args.RegistryOptions.KubeOptions)
 		s.environment.GatewayAPIController = gwc
 		s.ConfigStores = append(s.ConfigStores, s.environment.GatewayAPIController)
@@ -171,7 +184,7 @@ func (s *Server) initK8SConfigStore(args *PilotArgs) error {
 					NewPerRevisionLeaderElection(args.Namespace, args.PodName, leaderelection.GatewayDeploymentController, args.Revision, s.kubeClient).
 					AddRunFunction(func(leaderStop <-chan struct{}) {
 						// We can only run this if the Gateway CRD is created
-						if s.kubeClient.CrdWatcher().WaitForCRD(gvr.KubernetesGateway, leaderStop) {
+						if WaitForCRD(gvr.KubernetesGateway, leaderStop) {
 							var tagWatcher revisions.TagWatcher
 							// TagWatcher requires permission for MutatingWebhook, so it can't be used in multi-tenant mode
 							if !s.kubeClient.IsMultiTenant() {
