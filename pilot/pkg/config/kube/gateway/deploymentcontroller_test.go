@@ -61,7 +61,7 @@ func TestConfigureIstioGateway(t *testing.T) {
 			Name: "custom",
 		},
 		Spec: v1beta1.GatewayClassSpec{
-			ControllerName: constants.ManagedGatewayController,
+			ControllerName: controllerName,
 		},
 	}
 	defaultObjects := []runtime.Object{defaultNamespace}
@@ -301,7 +301,9 @@ func TestVersionManagement(t *testing.T) {
 			Name:      "gw",
 			Namespace: "default",
 		},
-		Spec: v1beta1.GatewaySpec{GatewayClassName: defaultClassName},
+		Spec: v1beta1.GatewaySpec{
+			GatewayClassName: defaultClassName,
+		},
 	}
 	gws.Create(defaultGateway)
 	assert.Equal(t, assert.ChannelHasItem(t, writes), buildPatch(ControllerVersion))
