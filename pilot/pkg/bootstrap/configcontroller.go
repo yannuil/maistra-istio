@@ -140,15 +140,8 @@ func (s *Server) initK8SConfigStore(args *PilotArgs) error {
 	configController := s.makeKubeConfigController(args)
 	s.ConfigStores = append(s.ConfigStores, configController)
 
-	var WaitForCRD func(class schema.GroupVersionResource, stop <-chan struct{}) bool
-	if s.kubeClient.CrdWatcher() == nil {
-		WaitForCRD = func(class schema.GroupVersionResource, stop <-chan struct{}) bool {
-			return true
-		}
-	} else {
-		WaitForCRD = func(class schema.GroupVersionResource, stop <-chan struct{}) bool {
-			return s.kubeClient.CrdWatcher().WaitForCRD(class, stop)
-		}
+	WaitForCRD := func(class schema.GroupVersionResource, stop <-chan struct{}) bool {
+		return s.kubeClient.CrdWatcher().WaitForCRD(class, stop)
 	}
 
 	if features.EnableGatewayAPI {

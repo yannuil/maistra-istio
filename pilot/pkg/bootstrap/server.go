@@ -554,9 +554,9 @@ func (s *Server) initKubeClient(args *PilotArgs) error {
 			if err := s.kubeClient.AddMemberRollController(args.Namespace, memberRollName); err != nil {
 				return fmt.Errorf("failed creating member roll controller: %v", err)
 			}
-		} else {
-			s.kubeClient = kubelib.EnableCrdWatcher(s.kubeClient)
 		}
+
+		s.kubeClient = kubelib.EnableCrdWatcher(s.kubeClient)
 	}
 
 	return nil
