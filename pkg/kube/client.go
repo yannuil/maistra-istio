@@ -661,7 +661,7 @@ func WaitForCacheSync(name string, stop <-chan struct{}, cacheSyncs ...cache.Inf
 		if delay > max {
 			delay = max
 		}
-		// log.WithLabels("name", name, "attempt", attempt, "time", time.Since(t0)).Debugf("waiting for sync...")
+		log.WithLabels("name", name, "attempt", attempt, "time", time.Since(t0)).Debugf("waiting for sync...")
 		if attempt%50 == 0 {
 			// Log every 50th attempt (5s) at info, to avoid too much noisy
 			log.WithLabels("name", name, "attempt", attempt, "time", time.Since(t0)).Infof("waiting for sync...")
