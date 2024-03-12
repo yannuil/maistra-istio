@@ -160,7 +160,7 @@ func (f *informerFactory) InformerFor(
 	if opts.Namespace != "" {
 		informer = newFunc(opts.Namespace)
 	} else {
-		if f.namespaces != nil {
+		if f.namespaces != nil && !gvr.IsClusterScoped(resource) {
 			informer = xnsinformers.NewMultiNamespaceInformer(f.namespaces, 0, newFunc)
 		} else {
 			informer = newFunc(metav1.NamespaceAll)
