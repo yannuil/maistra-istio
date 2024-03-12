@@ -340,7 +340,7 @@ spec:
     - type: RequestHeaderModifier
       requestHeaderModifier:
         add:
-        - name: my-added-header
+        - name: My-Added-Header
           value: added-value
     backendRefs:
     - name: b
