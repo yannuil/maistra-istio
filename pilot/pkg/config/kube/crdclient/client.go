@@ -365,7 +365,6 @@ func (cl *Client) addCRD(name string) {
 	if s.IsBuiltin() {
 		kc = kclient.NewUntypedInformer(cl.client, gvr, filter)
 	} else {
-		cl.logger.Infof("delayedInformer for %v", gvr)
 		kc = kclient.NewDelayedInformer[controllers.Object](
 			cl.client,
 			gvr,
