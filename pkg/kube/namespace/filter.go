@@ -300,7 +300,7 @@ func (d *maistraDiscoveryNamespacesFilter) FilterNamespace(nsMeta metav1.ObjectM
 // SelectorsChanged is not implemented, because Maistra does not filter namespaces by selectors;
 // this function should never be called if memberRollName is specified, so it's safe to call panic.
 func (d *maistraDiscoveryNamespacesFilter) SelectorsChanged(discoverySelectors []*metav1.LabelSelector) {
-	log.Warn("Discovery namespaces filter not supported in multi-tenancy. Ignore selector changes.")
+	panic("Not implemented")
 }
 
 // SyncNamespaces is not implemented, because this function should never be called if memberRollName is specified,
