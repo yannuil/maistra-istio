@@ -130,8 +130,6 @@ components:
         - path: spec.template.spec.containers.[name:discovery].args[-1]
           value: "--memberRollName=default"
         - path: spec.template.spec.containers.[name:discovery].args[-1]
-          value: "--enableCRDScan=false"
-        - path: spec.template.spec.containers.[name:discovery].args[-1]
           value: "--enableNodeAccess=false"
         - path: spec.template.spec.containers.[name:discovery].args[-1]
           value: "--enableIngressClassName=false"
