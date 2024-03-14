@@ -35,7 +35,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	k8s "sigs.k8s.io/gateway-api/apis/v1"
+	k8sv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"istio.io/istio/pilot/pkg/model/kstatus"
 	"istio.io/istio/pkg/config/constants"
@@ -96,6 +96,7 @@ func TestGateway(t *testing.T) {
 			t.NewSubTest("unmanaged").Run(UnmanagedGatewayTest)
 			t.NewSubTest("managed").Run(ManagedGatewayTest)
 			t.NewSubTest("managed-owner").Run(ManagedOwnerGatewayTest)
+			t.NewSubTest("managed-short-name").Run(ManagedGatewayShortNameTest)
 		})
 }
 
@@ -159,7 +160,7 @@ spec:
 		if gw == nil {
 			return fmt.Errorf("failed to find gateway")
 		}
-		cond := kstatus.GetCondition(gw.Status.Conditions, string(k8s.GatewayConditionProgrammed))
+		cond := kstatus.GetCondition(gw.Status.Conditions, string(k8sv1.GatewayConditionProgrammed))
 		if cond.Status != metav1.ConditionTrue {
 			return fmt.Errorf("failed to find programmed condition: %+v", cond)
 		}
@@ -200,6 +201,79 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: HTTPRoute
 metadata:
+  name: http-1
+spec:
+  parentRefs:
+  - name: gateway
+  hostnames: ["bar.example.com"]
+  rules:
+  - backendRefs:
+    - name: b
+      port: 80
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: http-2
+spec:
+  parentRefs:
+  - name: gateway
+  hostnames: ["foo.example.com"]
+  rules:
+  - backendRefs:
+    - name: d
+      port: 80
+`).ApplyOrFail(t)
+	testCases := []struct {
+		check echo.Checker
+		from  echo.Instances
+		host  string
+	}{
+		{
+			check: check.OK(),
+			from:  echo.Instances{apps[1]},
+			host:  "bar.example.com",
+		},
+		{
+			check: check.NotOK(),
+			from:  echo.Instances{apps[1]},
+			host:  "bar",
+		},
+	}
+	for _, tc := range testCases {
+		t.NewSubTest(fmt.Sprintf("gateway-connectivity-from-%s", tc.from[0].NamespacedName())).Run(func(t framework.TestContext) {
+			tc.from[0].CallOrFail(t, echo.CallOptions{
+				Port: echo.Port{
+					Protocol:    protocol.HTTP,
+					ServicePort: 80,
+				},
+				Scheme: scheme.HTTP,
+				HTTP: echo.HTTP{
+					Headers: headers.New().WithHost(tc.host).Build(),
+				},
+				Address: fmt.Sprintf("gateway-istio.%s.svc.cluster.local", appNs.Name()),
+				Check:   tc.check,
+			})
+		})
+	}
+}
+
+func ManagedGatewayShortNameTest(t framework.TestContext) {
+	t.ConfigIstio().YAML(appNs.Name(), `apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: gateway
+spec:
+  gatewayClassName: istio
+  listeners:
+  - name: default
+    hostname: "bar"
+    port: 80
+    protocol: HTTP
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
   name: http
 spec:
   parentRefs:
@@ -213,10 +287,22 @@ spec:
 		Port:   echo.Port{ServicePort: 80},
 		Scheme: scheme.HTTP,
 		HTTP: echo.HTTP{
-			Headers: headers.New().WithHost("bar.example.com").Build(),
+			Headers: headers.New().WithHost("bar").Build(),
 		},
 		Address: fmt.Sprintf("gateway-istio.%s.svc.cluster.local", appNs.Name()),
 		Check:   check.OK(),
+		Retry: echo.Retry{
+			Options: []retry.Option{retry.Timeout(time.Minute)},
+		},
+	})
+	apps[1].CallOrFail(t, echo.CallOptions{
+		Port:   echo.Port{ServicePort: 80},
+		Scheme: scheme.HTTP,
+		HTTP: echo.HTTP{
+			Headers: headers.New().WithHost("bar.example.com").Build(),
+		},
+		Address: fmt.Sprintf("gateway-istio.%s.svc.cluster.local", appNs.Name()),
+		Check:   check.NotOK(),
 		Retry: echo.Retry{
 			Options: []retry.Option{retry.Timeout(time.Minute)},
 		},
@@ -226,11 +312,11 @@ spec:
 func UnmanagedGatewayTest(t framework.TestContext) {
 	ingressutil.CreateIngressKubeSecret(t, "test-gateway-cert-same", ingressutil.TLS, ingressutil.IngressCredentialA,
 		false, t.Clusters().Configs()...)
-	ingressutil.CreateIngressKubeSecret(t, "test-gateway-cert-cross", ingressutil.TLS, ingressutil.IngressCredentialB,
-		false, t.Clusters().Configs()...)
+	ingressutil.CreateIngressKubeSecretInNamespace(t, "test-gateway-cert-cross", ingressutil.TLS, ingressutil.IngressCredentialB,
+		false, appNs.Name(), t.Clusters().Configs()...)
 
 	t.ConfigIstio().
-		YAML(istioNs.Name(), `
+		YAML(istioNs.Name(), fmt.Sprintf(`
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: Gateway
 metadata:
@@ -275,6 +361,7 @@ spec:
       certificateRefs:
       - kind: Secret
         name: test-gateway-cert-cross
+        namespace: "%s"
   - name: tls-same
     hostname: same-namespace.domain.example
     port: 443
@@ -287,7 +374,7 @@ spec:
       certificateRefs:
       - kind: Secret
         name: test-gateway-cert-same
-`).
+`, appNs.Name())).
 		YAML(appNs.Name(), fmt.Sprintf(`
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: HTTPRoute
@@ -326,7 +413,8 @@ metadata:
   name: b
 spec:
   parentRefs:
-  - kind: Service
+  - group: ""
+    kind: Service
     name: b
   - name: gateway
     namespace: %[1]s
@@ -340,7 +428,7 @@ spec:
     - type: RequestHeaderModifier
       requestHeaderModifier:
         add:
-        - name: My-Added-Header
+        - name: my-added-header
           value: added-value
     backendRefs:
     - name: b
@@ -436,7 +524,7 @@ spec:
 					if err != nil {
 						return err
 					}
-					cond := kstatus.GetCondition(gw.Status.Conditions, string(k8s.GatewayConditionProgrammed))
+					cond := kstatus.GetCondition(gw.Status.Conditions, string(k8sv1.GatewayConditionProgrammed))
 					if cond.Status != metav1.ConditionTrue {
 						return fmt.Errorf("failed to find programmed condition: %+v", cond)
 					}
