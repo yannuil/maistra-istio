@@ -172,7 +172,7 @@ func (s *Server) initK8SConfigStore(args *PilotArgs) error {
 					NewPerRevisionLeaderElection(args.Namespace, args.PodName, leaderelection.GatewayDeploymentController, args.Revision, s.kubeClient).
 					AddRunFunction(func(leaderStop <-chan struct{}) {
 						// We can only run this if the Gateway CRD is created
-						if WaitForCRD(gvr.KubernetesGateway, leaderStop) {
+						if s.kubeClient.CrdWatcher().WaitForCRD(gvr.KubernetesGateway, leaderStop) {
 							var tagWatcher revisions.TagWatcher
 							// TagWatcher requires permission for MutatingWebhook, so it can't be used in multi-tenant mode
 							if !s.kubeClient.IsMultiTenant() {

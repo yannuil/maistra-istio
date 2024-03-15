@@ -73,7 +73,7 @@ func (c *Controller) initDiscoveryNamespaceHandlers(discoveryNamespacesFilter fi
 // for membership changes
 func (c *Controller) initMeshWatcherHandler(meshWatcher mesh.Watcher, discoveryNamespacesFilter filter.DiscoveryNamespacesFilter) {
 	meshWatcher.AddMeshHandler(func() {
-		if c.client.GetMemberRollController() != nil {
+		if c.client.GetMemberRollController() == nil {
 			discoveryNamespacesFilter.SelectorsChanged(meshWatcher.Mesh().GetDiscoverySelectors())
 		}
 	})
