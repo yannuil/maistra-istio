@@ -33,6 +33,8 @@ import (
 	"istio.io/istio/pkg/config/analysis/local"
 	"istio.io/istio/pkg/config/legacy/util/kuberesource"
 	"istio.io/istio/pkg/config/resource"
+	"istio.io/istio/pkg/config/schema/collection"
+	"istio.io/istio/pkg/config/schema/collections"
 	"istio.io/istio/pkg/kube"
 	"istio.io/istio/pkg/log"
 	"istio.io/istio/pkg/util/concurrent"
@@ -50,12 +52,18 @@ func NewController(stop <-chan struct{}, rwConfigStore model.ConfigStoreControll
 	kubeClient kube.Client, revision, namespace string, statusManager *status.Manager, domainSuffix string,
 ) (*Controller, error) {
 	analyzer := analyzers.AllCombined()
-	all := kuberesource.ConvertInputsToSchemas(analyzer.Metadata().Inputs)
 
 	ia := local.NewIstiodAnalyzer(analyzer, "", resource.Namespace(namespace), func(name config.GroupVersionKind) {})
 	ia.AddSource(rwConfigStore)
 
+	schemas := kuberesource.ConvertInputsToSchemas(analyzer.Metadata().Inputs).
+		Remove(collections.MeshConfig).  // this is not an actual resource
+		Remove(collections.MeshNetworks) // this is not an actual resource
+	if kubeClient.IsMultiTenant() {
+		schemas = removeClusterScoped(schemas)
+	}
 	// Filter out configs watched by rwConfigStore so we don't watch multiple times
+	schemas = schemas.Remove(rwConfigStore.Schemas().All()...)
 	store := crdclient.NewForSchemas(kubeClient,
 		crdclient.Option{
 			Revision:     revision,
@@ -63,8 +71,7 @@ func NewController(stop <-chan struct{}, rwConfigStore model.ConfigStoreControll
 			Identifier:   "analysis-controller",
 			FiltersByGVK: ia.GetFiltersByGVK(),
 		},
-		all.Remove(rwConfigStore.Schemas().All()...))
-
+		schemas)
 	ia.AddSource(store)
 	kubeClient.RunAndWait(stop)
 	err := ia.Init(stop)
@@ -81,6 +88,16 @@ func NewController(stop <-chan struct{}, rwConfigStore model.ConfigStoreControll
 		return status
 	})
 	return &Controller{analyzer: ia, statusctl: ctl}, nil
+}
+
+func removeClusterScoped(schemas collection.Schemas) collection.Schemas {
+	b := collection.NewSchemasBuilder()
+	for _, s := range schemas.All() {
+		if !s.IsClusterScoped() {
+			b.MustAdd(s)
+		}
+	}
+	return b.Build()
 }
 
 // Run is blocking
