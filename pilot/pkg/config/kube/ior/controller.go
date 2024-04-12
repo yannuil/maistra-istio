@@ -121,6 +121,34 @@ func (r *routeController) deleteRoute(route *v1.Route) error {
 	return nil
 }
 
+func filteredRouteAnnotation(routeAnnotation string) bool {
+	filteredPrefixes := [...]string{
+		ShouldManageRouteAnnotation,
+		"kubectl.kubernetes.io",
+	}
+
+	for _, prefix := range filteredPrefixes {
+		if strings.HasPrefix(routeAnnotation, prefix) {
+			return true
+		}
+	}
+	return false
+}
+
+func filteredRouteLabel(routeLabel string) bool {
+	filteredPrefixes := [...]string{
+		maistraPrefix,
+		"argocd.argoproj.io/instance",
+	}
+
+	for _, prefix := range filteredPrefixes {
+		if strings.HasPrefix(routeLabel, prefix) {
+			return true
+		}
+	}
+	return false
+}
+
 func buildRoute(metadata config.Meta, originalHost string, tls *networking.ServerTLSSettings, serviceNamespace string, serviceName string) *v1.Route {
 	actualHost, wildcard := getActualHost(originalHost, true)
 
@@ -139,7 +167,7 @@ func buildRoute(metadata config.Meta, originalHost string, tls *networking.Serve
 		originalHostAnnotation: originalHost,
 	}
 	for keyName, keyValue := range metadata.Annotations {
-		if !strings.HasPrefix(keyName, "kubectl.kubernetes.io") && keyName != ShouldManageRouteAnnotation {
+		if !filteredRouteAnnotation(keyName) {
 			annotationMap[keyName] = keyValue
 		}
 	}
@@ -149,7 +177,7 @@ func buildRoute(metadata config.Meta, originalHost string, tls *networking.Serve
 	labelMap[gatewayResourceVersionLabel] = metadata.ResourceVersion
 
 	for keyName, keyValue := range metadata.Labels {
-		if !strings.HasPrefix(keyName, maistraPrefix) {
+		if !filteredRouteLabel(keyName) {
 			labelMap[keyName] = keyValue
 		}
 	}
