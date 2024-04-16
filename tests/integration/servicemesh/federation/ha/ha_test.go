@@ -118,7 +118,7 @@ spec:
 
 					aSecondary.CallOrFail(t, withDefaults(echo.CallOptions{
 						Address: fmt.Sprintf("b.%s.svc.cluster.local", ns.Name()),
-						Count:   2,
+						Count:   5,
 						Check: check.And(
 							check.GRPCStatus(codes.OK),
 							check.ReachedClusters(t.AllClusters(), []cluster.Cluster{primary, secondary}),
