@@ -53,7 +53,7 @@ func TestMain(m *testing.M) {
 		NewSuite(m).
 		RequireMaxClusters(1).
 		Setup(router.InstallOpenShiftRouter).
-		Setup(maistra.ApplyServiceMeshCRDs).
+		SetupParallel(maistra.ApplyServiceMeshCRDs, maistra.ApplyGatewayAPICRDs).
 		Setup(namespace.Setup(&istioNamespace, namespace.Config{Prefix: "istio-system"})).
 		Setup(maistra.Install(namespace.Future(&istioNamespace), nil)).
 		// We cannot apply restricted RBAC before the control plane installation, because the operator always applies
