@@ -177,6 +177,20 @@ func (sd *ServiceDiscovery) AddInstance(instance *model.ServiceInstance) {
 	}
 }
 
+func (sd *ServiceDiscovery) InstancesByPort(svc *model.Service, port int) []*model.ServiceInstance {
+	sd.mutex.Lock()
+	defer sd.mutex.Unlock()
+	if sd.InstancesError != nil {
+		return nil
+	}
+	key := fmt.Sprintf("%s:%d", string(svc.Hostname), port)
+	instances, ok := sd.instancesByPortNum[key]
+	if !ok {
+		return nil
+	}
+	return instances
+}
+
 // AddEndpoint adds an endpoint to a service.
 func (sd *ServiceDiscovery) AddEndpoint(service host.Name, servicePortName string, servicePort int, address string, port int) *model.ServiceInstance {
 	instance := &model.ServiceInstance{

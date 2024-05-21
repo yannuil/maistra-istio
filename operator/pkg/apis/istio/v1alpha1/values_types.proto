@@ -636,6 +636,9 @@ message PilotConfig {
   // Controls whether Pilot is enabled.
   google.protobuf.BoolValue enabled = 1;
 
+  // Controls whether Pilot is runing in federation mode
+  google.protobuf.BoolValue  enableFederation = 54;
+
   // Controls whether a HorizontalPodAutoscaler is installed for Pilot.
   google.protobuf.BoolValue autoscaleEnabled = 2;
 

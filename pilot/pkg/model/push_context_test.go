@@ -3061,6 +3061,10 @@ func (l *localServiceDiscovery) GetService(host.Name) *Service {
 	panic("implement me")
 }
 
+func (l *localServiceDiscovery) InstancesByPort(*Service, int) []*ServiceInstance {
+	panic("implement me")
+}
+
 func (l *localServiceDiscovery) GetProxyServiceTargets(*Proxy) []ServiceTarget {
 	panic("implement me")
 }

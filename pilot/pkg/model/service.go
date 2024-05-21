@@ -833,6 +833,8 @@ type ServiceDiscovery interface {
 	// GetService retrieves a service by host name if it exists
 	GetService(hostname host.Name) *Service
 
+	InstancesByPort(svc *Service, servicePort int) []*ServiceInstance
+
 	// GetProxyServiceTargets returns the service targets that co-located with a given Proxy
 	//
 	// Co-located generally means running in the same network namespace and security context.

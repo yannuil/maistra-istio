@@ -683,6 +683,20 @@ func (s *Controller) GetService(hostname host.Name) *model.Service {
 	return nil
 }
 
+func (s *Controller) InstancesByPort(svc *model.Service, port int) []*model.ServiceInstance {
+	out := make([]*model.ServiceInstance, 0)
+	s.mutex.RLock()
+	instanceLists := s.serviceInstances.getByKey(instancesKey{svc.Hostname, svc.Attributes.Namespace})
+	s.mutex.RUnlock()
+	for _, instance := range instanceLists {
+		if port == 0 || port == instance.ServicePort.Port {
+			out = append(out, instance)
+		}
+	}
+
+	return out
+}
+
 // ResyncEDS will do a full EDS update. This is needed for some tests where we have many configs loaded without calling
 // the config handlers.
 // This should probably not be used in production code.

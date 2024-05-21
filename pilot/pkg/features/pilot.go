@@ -354,6 +354,9 @@ var (
 	ExternalIstiod = env.Register("EXTERNAL_ISTIOD", false,
 		"If this is set to true, one Istiod will control remote clusters including CA.").Get()
 
+	NetworkName = env.Register("NETWORK_NAME", "Kubernetes",
+		"Defines the network that this Istiod instance belongs to").Get()
+
 	EnableCAServer = env.Register("ENABLE_CA_SERVER", true,
 		"If this is set to false, will not create CA server in istiod.").Get()
 
@@ -708,6 +711,8 @@ var (
 	PersistOldestWinsHeuristicForVirtualServiceHostMatching = env.Register("PERSIST_OLDEST_FIRST_HEURISTIC_FOR_VIRTUAL_SERVICE_HOST_MATCHING", false,
 		"If enabled, istiod will persist the oldest first heuristic for subtly conflicting traffic policy selection"+
 			"(such as with overlapping wildcard hosts)").Get()
+
+	EnableFederation = env.RegisterBoolVar("PILOT_ENABLE_FEDERATION", false, "").Get()
 )
 
 // UnsafeFeaturesEnabled returns true if any unsafe features are enabled.

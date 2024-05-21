@@ -73,7 +73,7 @@ func (t Bundle) ReplaceTrustDomainAliases(principals []string) []string {
 			principalsIncludingAliases = append(principalsIncludingAliases, t.replaceTrustDomains(principal, trustDomainFromPrincipal)...)
 		} else {
 			msg := fmt.Sprintf("Trust domain %s from principal %s does not match the current trust "+
-				"domain or its aliases", trustDomainFromPrincipal, principal)
+				"domain or its aliases: %v", trustDomainFromPrincipal, principal, t.TrustDomains)
 			// when SkipValidateTrustDomain is being used the message isn't very meaningful so we'll log it at a lower level
 			// logging it at this level may help users who are looking to disable skipping validation understand if it's safe
 			if !features.SkipValidateTrustDomain {

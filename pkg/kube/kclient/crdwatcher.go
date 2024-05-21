@@ -43,6 +43,7 @@ type crdWatcher struct {
 func init() {
 	// Unfortunate hack needed to avoid circular imports
 	kube.NewCrdWatcher = newCrdWatcher
+	kube.NewFastCrdWatcher = newFastCrdWatcher
 }
 
 // newCrdWatcher returns a new CRD watcher controller.
@@ -58,6 +59,15 @@ func newCrdWatcher(client kube.Client) kubetypes.CrdWatcher {
 		c.crds = NewMetadata(client, gvr.CustomResourceDefinition, Filter{})
 		c.crds.AddEventHandler(controllers.ObjectHandler(c.queue.AddObject))
 	}
+	return c
+}
+
+func newFastCrdWatcher(client kube.Client) kubetypes.CrdWatcher {
+	c := &crdWatcher{
+		running:   make(chan struct{}),
+		callbacks: map[string][]func(){},
+	}
+
 	return c
 }
 

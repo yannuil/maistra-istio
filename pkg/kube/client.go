@@ -454,7 +454,10 @@ func EnableCrdWatcher(c Client) Client {
 	return c
 }
 
-var NewCrdWatcher func(Client) kubetypes.CrdWatcher
+var (
+	NewCrdWatcher     func(Client) kubetypes.CrdWatcher
+	NewFastCrdWatcher func(Client) kubetypes.CrdWatcher
+)
 
 // NewDefaultClient returns a default client, using standard Kubernetes config resolution to determine
 // the cluster to access.
