@@ -290,6 +290,7 @@ func TestReconcile(t *testing.T) {
 	defer close(stopCh)
 	go kubeClient.RunAndWait(stopCh)
 	go rm.Start(stopCh)
+	kubeClient.WaitForCacheSync("configMap informer", stopCh, rm.ConfigMapInformer().HasSynced)
 	fedAdded := make(chan struct{})
 	fedDeleted := make(chan struct{})
 	rm.PeerInformer().Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
